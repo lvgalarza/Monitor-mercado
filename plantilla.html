@@ -223,6 +223,44 @@ td .sub{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-t
 .divline{background:color-mix(in srgb,var(--s-div) 9%,transparent);border-left:3px solid var(--s-div);padding:8px 12px;margin-top:14px}
 .notes{margin:14px 0 0;padding-left:18px;color:var(--muted);font-size:13.5px;max-width:100ch}
 .notes li{margin-bottom:4px}
+.mkt{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;padding:9px 14px;border-radius:6px;margin-bottom:14px;font-size:14px;border:1px solid var(--line);background:var(--surface)}
+.mkt .led{width:10px;height:10px;border-radius:50%;background:var(--grey)}
+.mkt.on{border-color:var(--up);background:var(--up-bg)}
+.mkt.on .led{background:var(--up);box-shadow:0 0 0 0 var(--up);animation:pulso 1.8s infinite}
+@keyframes pulso{70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.newdata{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;background:var(--amber-bg);border:1px solid var(--amber);border-radius:6px;padding:9px 14px;margin-bottom:14px;font-size:14px}
+.newdata button,.refresh{background:var(--accent);color:var(--accent-ink);border:0;border-radius:6px;padding:5px 12px;font-size:13.5px;text-decoration:none;display:inline-block}
+.refresh{margin-top:6px}
+@media (prefers-reduced-motion:reduce){.mkt.on .led{animation:none}}
+.upbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--grey);border-radius:6px;margin-bottom:14px}
+.upbar[data-f="ok"]{border-left-color:var(--up)} .upbar[data-f="mid"]{border-left-color:var(--amber)}
+.upinfo{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.fdot{width:11px;height:11px;border-radius:50%;background:var(--grey);flex:none}
+.upbar[data-f="ok"] .fdot{background:var(--up)} .upbar[data-f="mid"] .fdot{background:var(--amber)}
+.upact{display:flex;gap:8px}
+.btn-act{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:var(--accent-ink);border:0;border-radius:6px;padding:8px 16px;font-weight:600}
+.btn-act:hover{filter:brightness(1.1)}
+.btn-act .ic{display:inline-block;font-size:17px;line-height:1}
+.btn-act.busy .ic{animation:giro 1s linear infinite}
+@keyframes giro{to{transform:rotate(360deg)}}
+.btn-cfg{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 11px;font-size:17px;line-height:1}
+.actmsg{flex-basis:100%;padding:8px 12px;border-radius:5px;font-size:14px;background:var(--soft);border-left:4px solid var(--accent)}
+.actmsg[data-t="ok"]{border-left-color:var(--up);background:var(--up-bg)}
+.actmsg[data-t="err"]{border-left-color:var(--down);background:var(--down-bg)}
+.actmsg a{color:var(--accent)}
+dialog#cfg{max-width:560px;width:calc(100% - 32px);border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);padding:20px 22px}
+dialog#cfg::backdrop{background:rgba(10,20,25,.55)}
+dialog#cfg h3{margin-bottom:8px}
+dialog#cfg label{display:block;font-size:13.5px;color:var(--muted);margin-top:12px}
+dialog#cfg input,dialog#cfg select{display:block;width:100%;margin-top:4px}
+dialog#cfg .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+dialog#cfg .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+dialog#cfg .acts button{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:7px 14px}
+dialog#cfg .acts button.p{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+dialog#cfg details{border:0;padding:0;margin-top:12px;background:none}
+dialog#cfg summary{padding:6px 0;font-weight:500;font-size:14px}
+dialog#cfg ol,dialog#cfg ul{margin:6px 0 0;padding-left:20px;font-size:13.5px;color:var(--muted)}
+#cfgstate{margin-top:12px;font-size:14px;min-height:1.4em}
 @media (max-width:860px){
   .ideas,.movers{grid-template-columns:1fr}
   .yields{grid-template-columns:repeat(2,1fr)}
@@ -250,6 +288,17 @@ td .sub{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-t
     <div class="stamp num" id="stamp"></div>
   </header>
   <div id="demo"></div>
+  <div class="upbar" id="upbar">
+    <div class="upinfo"><span class="fdot" id="fdot"></span>
+      <span><b>Última actualización:</b> <span class="num" id="upt">—</span> <span class="hint">(hora de Ecuador)</span> · <span id="uprel"></span></span></div>
+    <div class="upact">
+      <button class="btn-act" id="btnAct"><span class="ic" aria-hidden="true">⟳</span><span id="btnTxt">Actualizar datos</span></button>
+      <button class="btn-cfg" id="btnCfg" aria-label="Configurar la conexión con GitHub" title="Configurar la conexión con GitHub">⚙</button>
+    </div>
+    <div class="actmsg" id="actmsg" role="status" aria-live="polite" hidden></div>
+  </div>
+  <div id="estado"></div>
+  <div id="nuevos"></div>
 
   <nav class="sec" aria-label="Secciones">
     <a href="#resumen" style="--c:var(--s-resumen)">Resumen del día</a>
@@ -423,16 +472,52 @@ td .sub{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-t
   </footer>
 </div>
 
+<dialog id="cfg" aria-labelledby="cfgt">
+  <h3 id="cfgt">Conexión con GitHub</h3>
+  <p class="hint">Sin esto, el botón «Actualizar datos» carga la última versión ya publicada. Con esto, además le pide a GitHub que descargue datos nuevos de Yahoo Finance y los muestra cuando estén listos. Se configura una sola vez en cada navegador.</p>
+  <label>Repositorio (usuario/nombre)<input type="text" id="cfgrepo" placeholder="usuario/Monitoreo-mercado" autocomplete="off"></label>
+  <div class="row2">
+    <label>Rama<input type="text" id="cfgref" placeholder="main" autocomplete="off"></label>
+    <label>Tipo de actualización<select id="cfgmodo"><option value="rapido">Rápida (unos minutos)</option><option value="completo">Completa (incluye P/E)</option></select></label>
+  </div>
+  <label>Token de acceso de GitHub<input type="password" id="cfgtoken" autocomplete="off" placeholder="Pega aquí tu token"></label>
+  <details><summary>Cómo crear el token (2 minutos)</summary>
+    <ol>
+      <li>En GitHub: tu foto → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token.</li>
+      <li>En «Repository access» elige <b>Only select repositories</b> y marca solo este repositorio.</li>
+      <li>En «Permissions → Repository permissions» pon <b>Actions: Read and write</b>. No actives nada más.</li>
+      <li>Elige una fecha de vencimiento (por ejemplo 90 días), genera el token y cópialo aquí.</li>
+    </ol>
+  </details>
+  <details><summary>Seguridad</summary>
+    <ul>
+      <li>El token se guarda solo en este navegador. Nunca se sube al repositorio ni se muestra en la página.</li>
+      <li>Con ese permiso, el token solo puede ejecutar o leer tareas de este repositorio, no modificar su código.</li>
+      <li>Úsalo solo en tu propio equipo, y bórralo aquí cuando ya no lo necesites.</li>
+    </ul>
+  </details>
+  <div id="cfgstate" role="status" aria-live="polite"></div>
+  <div class="acts">
+    <button class="p" id="cfgsave">Guardar y probar</button>
+    <button id="cfgdel">Borrar token</button>
+    <button id="cfgclose">Cerrar</button>
+  </div>
+</dialog>
+
 <script>
-const D = __DATOS_JSON__;
-const I = D.instrumentos;
-const BYT = Object.fromEntries(I.map(f => [f.t, f]));
-const HAS_DV = I.some(f => f.dv);
+let D = __DATOS_JSON__;
+let I, BYT, HAS_DV;
 const vsLevel = (p, x) => (p == null || x == null || x === 0) ? null : (p / x - 1) * 100;
-I.forEach(f => {
+function prep() {
+  I = D.instrumentos;
+  BYT = Object.fromEntries(I.map(f => [f.t, f]));
+  HAS_DV = I.some(f => f.dv);
+  I.forEach(f => {
   f.v50 = vsLevel(f.p, f.s50); f.v200 = vsLevel(f.p, f.s200); f.vlo = vsLevel(f.p, f.lo);
   f.dvp = f.dv ? f.dv.pct : (!HAS_DV && f.div != null && f.div > 0 ? f.div : null);
 });
+}
+prep();
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fmt = (x, d = 2) => x == null ? "—" : x.toLocaleString("es-EC", {minimumFractionDigits: d, maximumFractionDigits: d});
@@ -599,13 +684,17 @@ document.addEventListener("pointerout", e => {
 });
 
 /* ---------- etiquetas de sesiones ---------- */
+const ULT = () => (D.estado && D.estado.abierto) ? "Sesión en curso" : "Último cierre";
 const sesShort = (i, n) => i === n - 1 ? "Hoy" : `hace ${n - 1 - i}`;
-const sesLong = (f, i, n) => { const k = n - 1 - i; return k === 0 ? `Último cierre (${fdate(f.fecha)})` : `Hace ${k} ${k === 1 ? "sesión" : "sesiones"}`; };
+const sesLong = (f, i, n) => { const k = n - 1 - i; return k === 0 ? `${ULT()} (${fdate(f.fecha)})` : `Hace ${k} ${k === 1 ? "sesión" : "sesiones"}`; };
 
 /* ---------- encabezado y pulso ---------- */
 function header() {
-  $("#stamp").innerHTML = `Actualizado: ${esc(D.generado)}<br>Último cierre de mercado: ${esc(D.fecha_mercado)}`;
-  if (D.demo) $("#demo").innerHTML = `<div class="banner"><b>Datos de demostración.</b> Los precios de esta versión son inventados para probar el diseño. Ejecuta el script con datos reales para ver el mercado.</div>`;
+  const e = D.estado, ab = !!(e && e.abierto);
+  $("#stamp").innerHTML = ab ? "Precios de la sesión en curso<br>(≈15 min de retraso)" : "Último cierre de mercado:<br>" + esc(fdate(D.fecha_mercado));
+  pintaUpd();
+  $("#estado").innerHTML = e ? `<div class="mkt ${ab ? "on" : "off"}"><span class="led"></span><b>${ab ? "Mercado abierto" : "Mercado cerrado"}</b><span>${esc(e.texto)}</span></div>` : "";
+  $("#demo").innerHTML = !D.demo ? "" : `<div class="banner"><b>Datos de demostración.</b> Los precios de esta versión son inventados para probar el diseño. Ejecuta el script con datos reales para ver el mercado.</div>`;
   const items = [["SPY", "S&P 500"], ["QQQ", "Nasdaq 100"], ["VT", "Mercado mundial"], ["GC", "Oro"], ["CL", "Petróleo"]];
   let h = "";
   for (const [t, n] of items) {
@@ -628,7 +717,7 @@ function resumen() {
   const up = l.filter(f => f.d1 > 0.004).length, dn = l.filter(f => f.d1 < -0.004).length, fl = l.length - up - dn, t = l.length || 1;
   const seg = (c, v) => v ? `<span class="${c}" style="width:${v / t * 100}%">${v}</span>` : "";
   $("#breadth").innerHTML = `<div class="breadth" role="img" aria-label="${up} suben, ${dn} bajan, ${fl} sin cambio">${seg("bu", up)}${seg("bf", fl)}${seg("bd", dn)}</div>
-    <p class="bread-t">${l.length ? `De ${fmt(l.length, 0)} instrumentos hasta US$ ${fmt(S.limit, 0)}: <b class="up">${fmt(up, 0)} subieron</b>, <b class="down">${fmt(dn, 0)} bajaron</b> y ${fmt(fl, 0)} no cambiaron en la última sesión.` : "Ningún instrumento cumple el precio máximo elegido."}</p>`;
+    <p class="bread-t">${l.length ? `De ${fmt(l.length, 0)} instrumentos hasta US$ ${fmt(S.limit, 0)}: <b class="up">${fmt(up, 0)} subieron</b>, <b class="down">${fmt(dn, 0)} bajaron</b> y ${fmt(fl, 0)} no cambiaron ${D.estado && D.estado.abierto ? "en lo que va de la sesión" : "en la última sesión"}.` : "Ningún instrumento cumple el precio máximo elegido."}</p>`;
   const g = [...l].sort((a, b) => b.d1 - a.d1).slice(0, 6), p = [...l].sort((a, b) => a.d1 - b.d1).slice(0, 6);
   $("#movers").innerHTML = `<div class="col g"><h3>Mayores subidas de hoy</h3>${g.map(moverRow).join("") || '<p class="empty">Sin datos.</p>'}</div>
     <div class="col l"><h3>Mayores bajadas de hoy</h3>${p.map(moverRow).join("") || '<p class="empty">Sin datos.</p>'}</div>`;
@@ -679,7 +768,7 @@ function compare() {
   const series = sel.map((f, i) => { const a = f.spark.slice(-m); return {name: f.n, color: COLORS[i % COLORS.length], data: a.map(v => (v / a[0] - 1) * 100), w: 2.4}; });
   $("#cchart").innerHTML = `<h4>Cambio acumulado en las últimas ${m} sesiones (0 % = punto de partida)</h4>` + lineChart("cmp", {
     series, n: m, h: 300, ref: [{v: 0, color: "var(--muted)"}], fmt: v => (v > 0 ? "+" : "") + fmt(v, 1) + " %", vf: v => pct(v),
-    xl: i => sesShort(i, m), xt: i => i === m - 1 ? "Último cierre" : `Hace ${m - 1 - i} sesiones`, label: "Comparación de instrumentos seleccionados"
+    xl: i => sesShort(i, m), xt: i => i === m - 1 ? ULT() : `Hace ${m - 1 - i} sesiones`, label: "Comparación de instrumentos seleccionados"
   });
 }
 function addCmp(t) {
@@ -887,9 +976,15 @@ function dividendos() {
     + (HAS_DV ? "" : " Esta versión de los datos solo trae el porcentaje: actualiza el script de Python para ver monto, forma de pago y fechas.");
   $("#dvmore").hidden = l.length <= vis.length;
 }
-function dvInit() {
+function dvOpciones() {
   const frs = [...new Set(I.filter(f => f.dv).map(f => f.dv.frec))].sort((a, b) => (FRECO[a] || 9) - (FRECO[b] || 9));
-  $("#dvfrec").innerHTML = `<option value="">Cualquier forma de pago</option>` + frs.map(x => `<option>${esc(x)}</option>`).join("");
+  const sel = $("#dvfrec");
+  sel.innerHTML = `<option value="">Cualquier forma de pago</option>` + frs.map(x => `<option>${esc(x)}</option>`).join("");
+  sel.value = frs.includes(S.dv.frec) ? S.dv.frec : "";
+  if (sel.value !== S.dv.frec) S.dv.frec = "";
+}
+function dvInit() {
+  dvOpciones();
   $("#dvq").addEventListener("input", e => { S.dv.q = e.target.value.trim(); S.dv.shown = 40; dividendos(); });
   $("#dvtipo").addEventListener("change", e => { S.dv.tipo = e.target.value; S.dv.shown = 40; dividendos(); });
   $("#dvfrec").addEventListener("change", e => { S.dv.frec = e.target.value; S.dv.shown = 40; dividendos(); });
@@ -948,11 +1043,180 @@ $("#cadd").addEventListener("change", e => {
   e.target.value = "";
 });
 
+/* ---------- hora de la última actualización ---------- */
+function genMs(d) {
+  if (d.generado_utc) { const t = Date.parse(d.generado_utc); if (!isNaN(t)) return t; }
+  const m = String(d.generado || "").match(/(\d\d)\/(\d\d)\/(\d{4}) (\d\d):(\d\d)/);
+  return m ? Date.UTC(+m[3], +m[2] - 1, +m[1], +m[4] + 5, +m[5]) : null;   // hora de Ecuador = UTC-5
+}
+function relTxt(ms) {
+  const mi = Math.max(0, Math.floor((Date.now() - ms) / 60000));
+  if (mi < 1) return "hace menos de 1 minuto";
+  if (mi < 60) return `hace ${mi} min`;
+  const h = Math.floor(mi / 60);
+  if (h < 48) return `hace ${h} ${h === 1 ? "hora" : "horas"}${mi % 60 ? " " + (mi % 60) + " min" : ""}`;
+  return `hace ${Math.floor(h / 24)} días`;
+}
+function pintaUpd() {
+  $("#upt").textContent = String(D.generado || "—").replace(/\s*\(.*\)\s*$/, "");
+  const ms = genMs(D);
+  if (ms == null) { $("#uprel").textContent = ""; return; }
+  const mi = (Date.now() - ms) / 60000;
+  $("#uprel").textContent = relTxt(ms);
+  $("#upbar").dataset.f = mi < 120 ? "ok" : mi < 26 * 60 ? "mid" : "old";
+}
+setInterval(pintaUpd, 30000);
+
+/* ---------- botón «Actualizar datos» ---------- */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const stamp = d => d.generado_utc || d.generado;
+let busy = false, cancelar = false, pend = null;
+const POLL = 15000, POLL_PAGES = 10000;
+
+async function traerDatos() {
+  const r = await fetch("datos.json?t=" + Date.now(), {cache: "no-store"});
+  if (!r.ok) throw new Error("no encontré datos.json (HTTP " + r.status + ")");
+  return r.json();
+}
+function cargar(n) {
+  D = n; prep(); pend = null;
+  S.cmp = S.cmp.filter(t => BYT[t]);
+  if (S.open && !BYT[S.open]) S.open = null;
+  datalist(); dvOpciones(); header(); yields(); sectores(); todo(); compare();
+  $("#nuevos").innerHTML = "";
+}
+function msg(t, tipo = "info", url) {
+  const el = $("#actmsg"); el.hidden = !t; el.dataset.t = tipo;
+  el.innerHTML = esc(t) + (url ? ` <a href="${esc(url)}" target="_blank" rel="noopener">Ver registro ↗</a>` : "");
+}
+function ocupado(b) {
+  busy = b; $("#btnAct").classList.toggle("busy", b);
+  $("#btnTxt").textContent = b ? "Actualizando… (pulsa para dejar de esperar)" : "Actualizar datos";
+}
+
+const CFGK = "mm_gh";
+function leerCfg() {
+  let c = {};
+  try { c = JSON.parse(localStorage.getItem(CFGK) || "{}") || {}; } catch (e) {}
+  const hm = location.hostname.match(/^([^.]+)\.github\.io$/), rp = location.pathname.split("/")[1];
+  if (!c.repo && hm && rp) c.repo = hm[1] + "/" + rp;
+  c.ref = c.ref || "main"; c.modo = c.modo || "rapido";
+  return c;
+}
+function guardaCfg(c) { try { localStorage.setItem(CFGK, JSON.stringify(c)); } catch (e) {} }
+const gh = (c, path, o = {}) => fetch(`https://api.github.com/repos/${c.repo}${path}`, {
+  method: o.method || "GET",
+  headers: Object.assign({Accept: "application/vnd.github+json", Authorization: "Bearer " + c.token, "X-GitHub-Api-Version": "2022-11-28"}, o.body ? {"Content-Type": "application/json"} : {}),
+  body: o.body ? JSON.stringify(o.body) : undefined
+});
+function errGh(st) {
+  if (st === 401) return "GitHub no aceptó el token: es incorrecto o venció. Crea uno nuevo en ⚙.";
+  if (st === 403) return "El token no tiene permiso suficiente. Debe tener «Actions: Read and write» sobre este repositorio.";
+  if (st === 404) return "No encuentro el repositorio o el archivo actualizar.yml. Revisa el nombre del repositorio y que el token tenga acceso a él.";
+  if (st === 422) return "GitHub rechazó la solicitud. Revisa que la rama indicada exista (normalmente «main»).";
+  return "GitHub respondió con el error " + st + ".";
+}
+
+async function soloPublicado() {
+  msg("Buscando la última versión publicada…");
+  const n = await traerDatos();
+  if (stamp(n) !== stamp(D)) {
+    cargar(n);
+    msg("Cargué la última versión publicada (" + n.generado + "). Para pedirle a GitHub una descarga nueva de Yahoo Finance, configura la conexión con ⚙ (se hace una sola vez).", "ok");
+  } else {
+    msg("Ya estás viendo la versión más reciente publicada. Para pedirle a GitHub una descarga nueva de Yahoo Finance, configura la conexión con ⚙ (se hace una sola vez).", "info");
+  }
+}
+
+async function pedirActualizacion(c) {
+  const t0 = Date.now();
+  msg("Enviando la solicitud a GitHub…");
+  let r = await gh(c, "/actions/workflows/actualizar.yml/dispatches", {method: "POST", body: {ref: c.ref, inputs: {modo: c.modo}}});
+  if (r.status === 422) r = await gh(c, "/actions/workflows/actualizar.yml/dispatches", {method: "POST", body: {ref: c.ref}});
+  if (r.status !== 204) throw new Error(errGh(r.status));
+  let run = null;
+  for (let i = 0; i < 60 && !cancelar; i++) {
+    await sleep(i === 0 ? 4000 : POLL);
+    if (cancelar) break;
+    const rr = await gh(c, "/actions/workflows/actualizar.yml/runs?event=workflow_dispatch&per_page=5");
+    if (rr.ok) { const j = await rr.json(); run = (j.workflow_runs || []).find(x => Date.parse(x.created_at) >= t0 - 60000) || null; }
+    const seg = Math.round((Date.now() - t0) / 1000), tm = `${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, "0")}`;
+    if (!run) { msg(`Solicitud recibida. Esperando que GitHub inicie la tarea… (${tm})`); continue; }
+    if (run.status !== "completed") { msg(run.status === "in_progress" ? `Descargando datos de Yahoo Finance y calculando… (${tm})` : `En cola en GitHub… (${tm})`); continue; }
+    if (run.conclusion !== "success") { msg(`La tarea terminó con estado «${run.conclusion}». Si Yahoo bloqueó la descarga, espera un rato y vuelve a intentar.`, "err", run.html_url); return; }
+    break;
+  }
+  if (cancelar) { msg("Dejaste de esperar. La tarea sigue en GitHub; vuelve a pulsar «Actualizar datos» en unos minutos para cargar el resultado.", "info"); return; }
+  msg("Datos generados. Esperando que GitHub publique la página…");
+  for (let i = 0; i < 24 && !cancelar; i++) {
+    let n = null;
+    try { n = await traerDatos(); } catch (e) {}
+    if (n && stamp(n) !== stamp(D)) { cargar(n); msg("Listo: datos actualizados (" + n.generado + ").", "ok"); return; }
+    await sleep(POLL_PAGES);
+  }
+  msg(cancelar ? "Dejaste de esperar. Pulsa «Actualizar datos» en un minuto para cargar el resultado." : "La tarea terminó, pero la página aún no muestra datos nuevos. Espera un minuto y vuelve a pulsar «Actualizar datos».", "info");
+}
+
+async function actualizar() {
+  if (busy) { cancelar = true; return; }
+  cancelar = false; ocupado(true);
+  try {
+    if (!/^https?:/.test(location.protocol)) { msg("Abre el tablero desde su dirección web de GitHub Pages para poder actualizarlo.", "err"); return; }
+    const c = leerCfg();
+    if (!c.token || !c.repo) await soloPublicado(); else await pedirActualizacion(c);
+  } catch (e) {
+    msg("No pude actualizar: " + e.message, "err");
+  } finally { ocupado(false); cancelar = false; }
+}
+
+function abrirCfg() {
+  const c = leerCfg();
+  $("#cfgrepo").value = c.repo || ""; $("#cfgref").value = c.ref; $("#cfgmodo").value = c.modo; $("#cfgtoken").value = "";
+  $("#cfgtoken").placeholder = c.token ? "Token guardado (déjalo vacío para conservarlo)" : "Pega aquí tu token";
+  $("#cfgstate").textContent = "";
+  $("#cfg").showModal();
+}
+async function guardarCfg() {
+  const c = leerCfg(), tk = $("#cfgtoken").value.trim();
+  c.repo = $("#cfgrepo").value.trim().replace(/^https?:\/\/github\.com\//, "").replace(/\/+$/, "");
+  c.ref = $("#cfgref").value.trim() || "main"; c.modo = $("#cfgmodo").value;
+  if (tk) c.token = tk;
+  guardaCfg(c);
+  if (!c.token) { $("#cfgstate").textContent = "Guardado sin token: el botón solo cargará la última versión publicada."; return; }
+  $("#cfgstate").textContent = "Probando la conexión…";
+  try {
+    const r = await gh(c, "/actions/workflows/actualizar.yml");
+    $("#cfgstate").textContent = r.ok ? "Conexión correcta. Ya puedes cerrar y pulsar «Actualizar datos»." : errGh(r.status);
+  } catch (e) { $("#cfgstate").textContent = "No pude conectar con GitHub: " + e.message; }
+}
+$("#btnAct").addEventListener("click", actualizar);
+$("#btnCfg").addEventListener("click", abrirCfg);
+$("#cfgsave").addEventListener("click", guardarCfg);
+$("#cfgdel").addEventListener("click", () => { const c = leerCfg(); delete c.token; guardaCfg(c); $("#cfgstate").textContent = "Token borrado de este navegador."; });
+$("#cfgclose").addEventListener("click", () => $("#cfg").close());
+
+/* ---------- aviso de datos nuevos ---------- */
+function vigilar() {
+  if (!/^https?:/.test(location.protocol)) return;
+  setInterval(async () => {
+    if (busy) return;
+    try {
+      const n = await traerDatos();
+      if (stamp(n) !== stamp(D) && !$("#nuevos").innerHTML) {
+        pend = n;
+        $("#nuevos").innerHTML = `<div class="newdata"><span>Hay datos más recientes (${esc(n.generado)}).</span><button id="recarga">Ver datos nuevos</button></div>`;
+      }
+    } catch (e) {}
+  }, 300000);
+  document.addEventListener("click", e => { if (e.target && e.target.id === "recarga" && pend) cargar(pend); });
+}
+
 /* ---------- inicio ---------- */
-$("#cdl").innerHTML = [...I].sort((a, b) => a.n.localeCompare(b.n, "es")).map(f => `<option value="${esc(f.n)} (${esc(f.t)})"></option>`).join("");
+function datalist() { $("#cdl").innerHTML = [...I].sort((a, b) => a.n.localeCompare(b.n, "es")).map(f => `<option value="${esc(f.n)} (${esc(f.t)})"></option>`).join(""); }
+datalist();
 S.cmp = loadCmp() || ["SPY", "QQQ", "VT", "GLD"].filter(t => BYT[t]).slice(0, 4);
 if (!S.cmp.length) S.cmp = I.filter(f => f.cat !== "Futuro").slice(0, 3).map(f => f.t);
-header(); yields(); tabs(); sectores(); dvInit(); todo(); compare();
+header(); yields(); tabs(); sectores(); dvInit(); todo(); compare(); vigilar();
 </script>
 </body>
 </html>
