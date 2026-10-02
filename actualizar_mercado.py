@@ -5,7 +5,8 @@ Monitor de mercado para principiantes
 =====================================
 Descarga precios de acciones del S&P 500, ETFs, ETFs de bonos y futuros,
 más los rendimientos de los bonos del Tesoro de EE. UU. (FRED), calcula
-indicadores sencillos y genera un tablero web autocontenido (docs/index.html).
+indicadores sencillos (incluido el resumen de dividendos) y genera un tablero web
+autocontenido (docs/index.html).
 
 Uso:
     python actualizar_mercado.py                 # datos reales
@@ -166,13 +167,14 @@ def construir_universo():
 # ---------------------------------------------------------------------------
 # 2. DESCARGA DE DATOS
 # ---------------------------------------------------------------------------
-def descargar_precios(tickers, periodo="14mo", lote=80):
+def descargar_precios(tickers, periodo="2y", lote=80):
     import yfinance as yf
     marcos = {}
     for i in range(0, len(tickers), lote):
         grupo = tickers[i:i + lote]
         try:
             df = yf.download(grupo, period=periodo, interval="1d", auto_adjust=True,
+                             actions=True,  # incluye la columna "Dividends"
                              group_by="ticker", threads=True, progress=False)
         except Exception as e:  # noqa: BLE001
             print(f"[aviso] Falló un lote de descarga: {e}", file=sys.stderr)
@@ -284,6 +286,54 @@ def variacion(c, n):
     return (c.iloc[-1] / c.iloc[-1 - n] - 1) * 100 if len(c) > n else None
 
 
+def dividendos(sub, precio):
+    """Resumen de dividendos a partir del historial de Yahoo (columna 'Dividends').
+    Devuelve None si no pagó dividendos en los últimos 12 meses."""
+    if "Dividends" not in sub.columns or not precio:
+        return None
+    idx = pd.DatetimeIndex(sub.index)
+    if idx.tz is not None:
+        idx = idx.tz_localize(None)
+    d = pd.Series(pd.to_numeric(sub["Dividends"], errors="coerce").fillna(0.0).values, index=idx)
+    d = d[d > 0]
+    if d.empty:
+        return None
+    fin = idx[-1]
+    ult12 = d[d.index > fin - pd.Timedelta(days=365)]
+    if ult12.empty:
+        return None
+    huecos = d.index.to_series().diff().dt.days.dropna()
+    mediana = float(huecos.tail(6).median()) if len(huecos) else None
+    if mediana is None:
+        frec, n_anio = "Anual o irregular", 1
+    elif mediana < 45:
+        frec, n_anio = "Mensual", 12
+    elif mediana < 121:
+        frec, n_anio = "Trimestral", 4
+    elif mediana < 241:
+        frec, n_anio = "Semestral", 2
+    elif mediana < 451:
+        frec, n_anio = "Anual", 1
+    else:
+        frec, n_anio = "Irregular", None
+    pagos = ult12.tail(n_anio) if n_anio and len(ult12) > n_anio else ult12
+    anual = float(pagos.sum())
+    prox = None
+    if mediana and frec != "Irregular":
+        est = d.index[-1] + pd.Timedelta(days=int(round(mediana)))
+        if est > fin:
+            prox = est.strftime("%Y-%m-%d")
+    return {
+        "anual": r(anual, 4),                       # US$ por acción en los últimos 12 meses
+        "pct": r(anual / precio * 100, 2),          # rendimiento por dividendo (%)
+        "frec": frec,                               # forma de pago: Mensual, Trimestral...
+        "n": int(n_anio or len(pagos)),             # pagos por año
+        "ult": r(float(d.iloc[-1]), 4),             # último pago (US$ por acción)
+        "ult_f": d.index[-1].strftime("%Y-%m-%d"),  # fecha ex-dividendo del último pago
+        "prox": prox,                               # próxima fecha estimada
+    }
+
+
 def indicadores(sub):
     c = sub["Close"].astype(float)
     ult = float(c.iloc[-1])
@@ -305,6 +355,7 @@ def indicadores(sub):
         "rsi": calc_rsi(c),
         "spark": [round(float(x), 2) for x in c.tail(60)],
         "fecha": str(c.index[-1].date()),
+        "dv": dividendos(sub, ult),
     }
 
 
@@ -374,7 +425,13 @@ def marcos_demo(tickers):
         mu = rnd.normal(0.0003, 0.0004)
         sg = rnd.uniform(0.005, 0.028)
         c = p0 * np.exp(np.cumsum(rnd.normal(mu, sg, len(idx))))
-        marcos[t] = pd.DataFrame({"Close": c, "Volume": 1e6}, index=idx)
+        div = np.zeros(len(idx))
+        if "=F" not in t and rnd.random() < 0.65:
+            paso = int(rnd.choice([21, 63, 63, 63, 126, 252]))
+            rend = rnd.uniform(0.004, 0.06)
+            for k in range(int(rnd.integers(5, paso)), len(idx), paso):
+                div[k] = p0 * rend * paso / 252
+        marcos[t] = pd.DataFrame({"Close": c, "Volume": 1e6, "Dividends": div}, index=idx)
     return marcos
 
 
@@ -431,6 +488,7 @@ def main():
             fila[k] = r(m[k], d)
         fila["spark"] = m["spark"]
         fila["fecha"] = m["fecha"]
+        fila["dv"] = None if meta["cat"] == "Futuro" else m["dv"]
         filas.append(fila)
 
     print("4/5 Obteniendo P/E y dividendos (instrumentos bajo el umbral)...")

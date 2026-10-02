@@ -14,7 +14,7 @@
   --up:#17794A; --down:#B23A32; --amber:#B7791F; --grey:#8A979E; --violet:#7C3AED;
   --up-bg:#E3F2EA; --down-bg:#F8E6E4; --amber-bg:#FBF0DB;
   --cat-a:#2563EB; --cat-e:#9333EA; --cat-b:#0E8A8A; --cat-f:#C2570C;
-  --s-resumen:#3B5BDB; --s-ideas:#0E8A8A; --s-bonos:#A16207; --s-seg:#7C3AED; --s-expl:#334155; --s-guia:#64748B;
+  --s-resumen:#3B5BDB; --s-ideas:#0E8A8A; --s-bonos:#A16207; --s-seg:#7C3AED; --s-expl:#334155; --s-guia:#64748B; --s-div:#BE185D;
   --serif:"Newsreader",Georgia,"Times New Roman",serif;
   --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
 }
@@ -25,7 +25,7 @@
     --up:#4CC38A; --down:#F0847B; --amber:#E3AE55; --grey:#7D8C94; --violet:#A78BFA;
     --up-bg:#16372A; --down-bg:#412120; --amber-bg:#3B3018;
     --cat-a:#6EA2FF; --cat-e:#C084FC; --cat-b:#4FD1D1; --cat-f:#FB923C;
-    --s-resumen:#7C9BFF; --s-ideas:#4FD1D1; --s-bonos:#E3AE55; --s-seg:#A78BFA; --s-expl:#94A3B8; --s-guia:#94A3B8;
+    --s-resumen:#7C9BFF; --s-ideas:#4FD1D1; --s-bonos:#E3AE55; --s-seg:#A78BFA; --s-expl:#94A3B8; --s-guia:#94A3B8; --s-div:#F472B6;
   }
 }
 :root[data-theme="dark"]{
@@ -34,7 +34,7 @@
   --up:#4CC38A; --down:#F0847B; --amber:#E3AE55; --grey:#7D8C94; --violet:#A78BFA;
   --up-bg:#16372A; --down-bg:#412120; --amber-bg:#3B3018;
   --cat-a:#6EA2FF; --cat-e:#C084FC; --cat-b:#4FD1D1; --cat-f:#FB923C;
-  --s-resumen:#7C9BFF; --s-ideas:#4FD1D1; --s-bonos:#E3AE55; --s-seg:#A78BFA; --s-expl:#94A3B8; --s-guia:#94A3B8;
+  --s-resumen:#7C9BFF; --s-ideas:#4FD1D1; --s-bonos:#E3AE55; --s-seg:#A78BFA; --s-expl:#94A3B8; --s-guia:#94A3B8; --s-div:#F472B6;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -207,6 +207,22 @@ details .in li{margin-bottom:4px}
 .gl2 dd{margin:2px 0 0;color:var(--muted)}
 footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:90ch}
 
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:8px 0 4px;background:var(--surface)}
+.seg button{background:none;border:0;padding:7px 14px;font-size:14px;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--s-expl);color:var(--accent-ink);font-weight:600}
+td .sub{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-top:1px}
+.yl{display:inline-block;padding:2px 9px;border-radius:5px;font-weight:600;font-size:13px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.wr{color:var(--amber);cursor:help;margin-left:4px}
+.fq{display:inline-block;font-size:12.5px;font-weight:600;padding:1px 9px;border-radius:999px;border:1px solid var(--fc);color:var(--fc);background:color-mix(in srgb,var(--fc) 10%,transparent)}
+.fm{--fc:var(--cat-b)} .ft{--fc:var(--cat-a)} .fs{--fc:var(--amber)} .fa{--fc:var(--grey)} .fi{--fc:var(--grey)}
+.tablebox.dv{border-top-color:var(--s-div)}
+#dtbl{border-collapse:collapse;width:100%;min-width:900px}
+#dtbl>thead th:first-child,#dtbl td:first-child{text-align:left}
+#dtbl tr.row>td:first-child{border-left:4px solid var(--tcat)}
+.divline{background:color-mix(in srgb,var(--s-div) 9%,transparent);border-left:3px solid var(--s-div);padding:8px 12px;margin-top:14px}
+.notes{margin:14px 0 0;padding-left:18px;color:var(--muted);font-size:13.5px;max-width:100ch}
+.notes li{margin-bottom:4px}
 @media (max-width:860px){
   .ideas,.movers{grid-template-columns:1fr}
   .yields{grid-template-columns:repeat(2,1fr)}
@@ -214,7 +230,7 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:90ch}
   .dgrid,.dgrid.top{grid-template-columns:minmax(0,1fr)}
   .dw{width:var(--tw,100%)}
   .hm{display:none}
-  #tbl{min-width:0}
+  #tbl,#dtbl{min-width:0}
   h1{font-size:28px}
   .stamp{text-align:left}
   input[type=search]{width:100%}
@@ -241,6 +257,7 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:90ch}
     <a href="#bonos-sec" style="--c:var(--s-bonos)">Bonos</a>
     <a href="#seguimiento" style="--c:var(--s-seg)">Seguimiento</a>
     <a href="#explorador" style="--c:var(--s-expl)">Explorador</a>
+    <a href="#dividendos" style="--c:var(--s-div)">Dividendos</a>
     <a href="#guia" style="--c:var(--s-guia)">Guía</a>
   </nav>
 
@@ -307,6 +324,10 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:90ch}
       <p>Toca una fila para ver su gráfico de línea, la variación de cada día y por qué tiene su color. Ordena con los títulos de columna.</p>
     </div>
     <div class="tabs" id="tabs" role="group" aria-label="Tipo de instrumento"></div>
+    <div class="seg" id="vista" role="group" aria-label="Vista de la tabla">
+      <button data-v="res" aria-pressed="true">Variaciones</button>
+      <button data-v="niv" aria-pressed="false">Promedios, 52 semanas y rendimiento anual</button>
+    </div>
     <div class="ctrl">
       <input type="search" id="q" placeholder="Buscar por nombre o símbolo" aria-label="Buscar">
       <select id="sec" aria-label="Sector"></select>
@@ -321,6 +342,33 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:90ch}
     <p class="hint" id="count" style="margin-bottom:8px"></p>
     <div class="tablebox"><table id="tbl"></table></div>
     <button class="more" id="more" hidden>Mostrar más</button>
+  </section>
+
+  <section id="dividendos" style="--sc:var(--s-div)">
+    <div class="hd">
+      <h2>Dividendos</h2>
+      <p>Empresas y fondos que reparten dividendos: cuánto pagan al año por cada acción, cada cuánto y cuánto recibirías con el monto que quieras invertir. Los datos son de los últimos 12 meses.</p>
+    </div>
+    <div class="ctrl">
+      <input type="search" id="dvq" placeholder="Buscar por nombre o símbolo" aria-label="Buscar en dividendos">
+      <select id="dvtipo" aria-label="Tipo">
+        <option value="">Acciones y fondos</option><option value="Acción">Solo acciones</option><option value="ETF">Solo ETFs</option><option value="Bono">Solo ETFs de bonos</option>
+      </select>
+      <select id="dvfrec" aria-label="Forma de pago"><option value="">Cualquier forma de pago</option></select>
+      <label class="f">Rendimiento mínimo (%) <input type="number" id="dvmin" min="0" step="0.5" value="0" inputmode="decimal"></label>
+      <label class="f">Simular inversión (US$) <input type="number" id="dvmonto" min="1" step="100" value="1000" inputmode="decimal"></label>
+      <label class="f"><input type="checkbox" id="dvsolo" checked> Solo hasta el precio máximo</label>
+    </div>
+    <p class="hint" id="dvcount" style="margin-bottom:8px"></p>
+    <div class="tablebox dv"><table id="dtbl"></table></div>
+    <button class="more" id="dvmore" hidden>Mostrar más</button>
+    <ul class="notes">
+      <li>El dividendo lo paga la empresa en efectivo, por cada acción que tengas antes de la <b>fecha ex-dividendo</b>. Algunos corredores permiten reinvertirlo automáticamente.</li>
+      <li>El porcentaje es el dividendo de los últimos 12 meses dividido entre el precio actual. Las empresas pueden subirlo, bajarlo o suspenderlo, así que no es un ingreso garantizado.</li>
+      <li>Un rendimiento muy alto (marcado con ⚠) suele indicar que el precio cayó o que el dividendo está en riesgo. Revisa por qué antes de decidir.</li>
+      <li>La fecha del próximo pago es una estimación según el ritmo de pagos anteriores, no un dato oficial de la empresa.</li>
+      <li>Los pagos desde EE. UU. pueden llegar con retenciones de impuestos y tienen tratamiento tributario en Ecuador: confírmalo con tu corredor y con la normativa del SRI.</li>
+    </ul>
   </section>
 
   <section id="guia" style="--sc:var(--s-guia)">
@@ -353,7 +401,11 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:90ch}
       <dt>Volatilidad</dt><dd>Qué tanto se mueve el precio. Bajo: menos de 20 % anual; medio: 20 a 35 %; alto: más de 35 %.</dd>
       <dt>RSI</dt><dd>Mide el ritmo de las últimas semanas de 0 a 100. Sobre 70 suele indicar que subió muy rápido; bajo 30, que cayó con fuerza.</dd>
       <dt>P/E (precio/utilidad)</dt><dd>Cuántos dólares se pagan por cada dólar de utilidad anual de la empresa. Es útil solo al comparar empresas similares.</dd>
-      <dt>Dividendo</dt><dd>Parte de las utilidades que la empresa reparte cada año, como porcentaje del precio.</dd>
+      <dt>Rendimiento anual</dt><dd>Cuánto cambió el precio en los últimos 12 meses (unas 252 sesiones). Los precios históricos vienen ajustados por dividendos y divisiones de acciones.</dd>
+      <dt>Vs. promedio, vs. máximo y vs. mínimo</dt><dd>Qué tan lejos está el precio actual de ese nivel. Positivo significa que está por encima; negativo, por debajo.</dd>
+      <dt>Dividendo</dt><dd>Parte de las utilidades que la empresa reparte cada año, como porcentaje del precio y como dólares por acción.</dd>
+      <dt>Forma de pago</dt><dd>Cada cuánto paga: mensual (12 veces al año), trimestral (4), semestral (2) o anual (1).</dd>
+      <dt>Fecha ex-dividendo</dt><dd>Para recibir un dividendo debes tener la acción antes de esa fecha. Quien la compra ese día o después ya no lo recibe.</dd>
       <dt>ETF</dt><dd>Fondo que cotiza como una acción y contiene muchos activos (acciones, bonos u oro).</dd>
       <dt>Futuro</dt><dd>Contrato para comprar o vender un activo a un precio fijado hoy. Se opera con apalancamiento: las pérdidas pueden superar el dinero depositado.</dd>
     </dl></div></details>
@@ -375,6 +427,12 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:90ch}
 const D = __DATOS_JSON__;
 const I = D.instrumentos;
 const BYT = Object.fromEntries(I.map(f => [f.t, f]));
+const HAS_DV = I.some(f => f.dv);
+const vsLevel = (p, x) => (p == null || x == null || x === 0) ? null : (p / x - 1) * 100;
+I.forEach(f => {
+  f.v50 = vsLevel(f.p, f.s50); f.v200 = vsLevel(f.p, f.s200); f.vlo = vsLevel(f.p, f.lo);
+  f.dvp = f.dv ? f.dv.pct : (!HAS_DV && f.div != null && f.div > 0 ? f.div : null);
+});
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fmt = (x, d = 2) => x == null ? "—" : x.toLocaleString("es-EC", {minimumFractionDigits: d, maximumFractionDigits: d});
@@ -401,7 +459,7 @@ const dot = s => `<span class="dot ${s}" role="img" aria-label="${SEM[s]}" title
 const CATS = [["Todos", "Todos"], ["Acción", "Acciones"], ["ETF", "ETFs"], ["Bono", "Bonos (ETF)"], ["Futuro", "Futuros"]];
 const RIESGO = {"Bajo": 1, "Medio": 2, "Alto": 3, "Muy alto": 4};
 const COLORS = ["#2563EB", "#EA580C", "#7C3AED", "#0D9488", "#DB2777", "#A16207"];
-const S = {cat: "Todos", q: "", sec: "", sem: "", solo: true, limit: D.umbral, sort: "score", dir: -1, open: null, shown: 100, cmp: []};
+const S = {cat: "Todos", q: "", sec: "", sem: "", solo: true, limit: D.umbral, sort: "score", dir: -1, open: null, shown: 100, cmp: [], vista: "res", dv: {q: "", tipo: "", frec: "", min: 0, solo: true, monto: 1000, sort: "pct", dir: -1, shown: 40}};
 
 /* ---------- almacenamiento opcional (lista de seguimiento) ---------- */
 function loadCmp() {
@@ -687,23 +745,28 @@ function detalle(f) {
       </div></div>`;
   }
   const encabezado = `<div class="dhd"><b>${esc(f.n)}</b>${tag(f)}${catTag(f.cat)}<span class="hint">${esc(f.sec || "")}</span></div>`;
+  const nivel = (v, p, cap) => v == null ? "—" : `US$ ${fmt(v)} ${chip(p, cap)}`;
   const metricas = `<dl class="m">
+      <dt>Rendimiento anual (12 meses)</dt><dd>${chip(f.a1, 40)}</dd>
+      <dt>Desde el 1 de enero</dt><dd>${chip(f.ytd, 40)}</dd>
+      <dt>Promedio 50 días</dt><dd class="num">${nivel(f.s50, f.v50, 10)}</dd>
+      <dt>Promedio 200 días</dt><dd class="num">${nivel(f.s200, f.v200, 20)}</dd>
+      <dt>Máximo 52 semanas</dt><dd class="num">${nivel(f.hi, f.dh, 30)}</dd>
+      <dt>Mínimo 52 semanas</dt><dd class="num">${nivel(f.lo, f.vlo, 50)}</dd>
       <dt>Variación 5 días</dt><dd class="num ${cls(f.d5)}">${pct(f.d5)}</dd>
       <dt>Variación 3 meses</dt><dd class="num ${cls(f.m3)}">${pct(f.m3)}</dd>
-      <dt>Máximo 52 semanas</dt><dd class="num">US$ ${fmt(f.hi)}</dd>
-      <dt>Mínimo 52 semanas</dt><dd class="num">US$ ${fmt(f.lo)}</dd>
-      <dt>Promedio 50 días</dt><dd class="num">${f.s50 != null ? "US$ " + fmt(f.s50) : "—"}</dd>
-      <dt>Promedio 200 días</dt><dd class="num">${f.s200 != null ? "US$ " + fmt(f.s200) : "—"}</dd>
       <dt>Volatilidad anual</dt><dd class="num">${f.vol != null ? fmt(f.vol, 0) + " %" : "—"}</dd>
       <dt>RSI</dt><dd class="num">${f.rsi != null ? fmt(f.rsi, 0) : "—"}</dd>
       ${f.cat === "Acción" ? `<dt>P/E</dt><dd class="num">${f.pe != null ? fmt(f.pe, 1) : "—"}</dd>` : ""}
-      ${f.cat === "Acción" || f.cat === "ETF" ? `<dt>Dividendo anual</dt><dd class="num">${f.div != null ? fmt(f.div) + " %" : "—"}</dd>` : ""}
     </dl>`;
+  const divn = f.cat === "Futuro" ? "" : f.dv
+    ? `<div class="divline"><b>Dividendos:</b> ${fmt(f.dv.pct)} % al año. Con 1 acción (US$ ${fmt(f.p)}) recibirías unos US$ ${fmt(f.dv.anual)} al año, pagados de forma ${esc(f.dv.frec.toLowerCase())}${f.dv.n ? ` (${f.dv.n} ${f.dv.n === 1 ? "pago" : "pagos"} de unos US$ ${fmt(f.dv.anual / f.dv.n)})` : ""}. Último pago: ${fdate(f.dv.ult_f)}${f.dv.prox ? `; próximo estimado: ${fdate(f.dv.prox)}` : ""}.</div>`
+    : f.dvp != null ? `<div class="divline"><b>Dividendos:</b> rendimiento de ${fmt(f.dvp)} % al año.</div>` : `<p class="hint" style="margin-top:14px">No pagó dividendos en los últimos 12 meses.</p>`;
   if (f.cat === "Futuro") {
     return encabezado + graficos + `<div class="dgrid"><div class="warn"><b>Un contrato equivale a unos US$ ${fmt(f.contrato, 0)}</b> (${esc(f.unidad)}). Se opera con apalancamiento: se deposita una fracción de ese valor, pero las pérdidas se calculan sobre el total y pueden superar lo depositado. Aquí se muestra solo para seguir el comportamiento del precio.</div>${metricas}</div>`;
   }
   const li = (a, c) => (a || []).map(t => `<li class="${c}">${esc(t)}</li>`).join("");
-  return encabezado + graficos + `<div class="dgrid"><div>
+  return encabezado + graficos + divn + `<div class="dgrid"><div>
       <h4>Puntaje ${f.score} de 100 · ${SEM[f.sem]}</h4>
       <ul>${li(f.pos, "p")}${li(f.neg, "n")}</ul>
       <p class="hint">Este puntaje usa solo precios pasados. No incluye noticias ni resultados de la empresa.</p>
@@ -712,8 +775,11 @@ function detalle(f) {
 
 function setTW() { const b = $(".tablebox"); if (b) document.documentElement.style.setProperty("--tw", Math.max(280, b.clientWidth - 48) + "px"); }
 window.addEventListener("resize", setTW);
+function celdaNiv(valor, p, cap) {
+  return `<td class="num hm ${cls(p)}" style="${heat(p, cap)}">${pct(p)}<span class="sub">${valor == null ? "—" : "US$ " + fmt(valor)}</span></td>`;
+}
 function tabla() {
-  const k = S.sort, d = S.dir;
+  const k = S.sort, d = S.dir, niv = S.vista === "niv";
   const l = I.filter(pasa).sort((a, b) => {
     const x = val(a, k), y = val(b, k);
     if (x == null && y == null) return 0;
@@ -723,26 +789,33 @@ function tabla() {
   });
   const total = l.length, vis = l.slice(0, S.shown);
   const th = (key, txt, c = "") => `<th class="${c}"><button data-k="${key}" data-on="${S.sort === key ? 1 : 0}" aria-label="Ordenar por ${txt}">${txt}${S.sort === key ? (S.dir < 0 ? " ↓" : " ↑") : ""}</button></th>`;
-  let h = `<thead><tr><th aria-label="Seguir"></th>${th("score", "Semáforo")}${th("n", "Instrumento", "l")}${th("p", "Precio (US$)")}${th("dl", "Cambio US$", "hm")}${th("d1", "Hoy %")}${th("m1", "Mes", "hm")}${th("ytd", "Año", "hm")}${th("dh", "Vs. máx. 52 s.", "hm")}${th("riesgo", "Riesgo", "hm")}<th class="hm">60 días</th></tr></thead><tbody>`;
+  let h = niv
+    ? `<thead><tr><th aria-label="Seguir"></th>${th("score", "Semáforo")}${th("n", "Instrumento", "l")}${th("p", "Precio (US$)")}${th("a1", "Rendimiento anual (12 m)")}${th("v50", "Vs. prom. 50 días", "hm")}${th("v200", "Vs. prom. 200 días", "hm")}${th("dh", "Vs. máx. 52 sem.", "hm")}${th("vlo", "Vs. mín. 52 sem.", "hm")}${th("dvp", "Dividendo anual", "hm")}</tr></thead><tbody>`
+    : `<thead><tr><th aria-label="Seguir"></th>${th("score", "Semáforo")}${th("n", "Instrumento", "l")}${th("p", "Precio (US$)")}${th("dl", "Cambio US$", "hm")}${th("d1", "Hoy %")}${th("m1", "Mes", "hm")}${th("ytd", "Año", "hm")}${th("dh", "Vs. máx. 52 s.", "hm")}${th("riesgo", "Riesgo", "hm")}<th class="hm">60 días</th></tr></thead><tbody>`;
   for (const f of vis) {
     const abierto = S.open === f.t, dl = deltaP(f);
-    h += `<tr class="row ${CATC[f.cat] || ""}" tabindex="0" data-t="${esc(f.t)}" aria-expanded="${abierto}">
+    const comunes = `<tr class="row ${CATC[f.cat] || ""}" tabindex="0" data-t="${esc(f.t)}" aria-expanded="${abierto}">
       <td><button class="star" data-s="${esc(f.t)}" aria-pressed="${S.cmp.includes(f.t)}" title="Añadir al seguimiento y la comparación" aria-label="Seguir ${esc(f.n)}">★</button></td>
       <td><span class="sc">${dot(f.sem)}<span class="num">${f.score ?? "—"}</span></span></td>
       <td class="who l"><b>${esc(f.n)}</b><small>${tag(f)} ${esc(f.sec || "")}</small></td>
-      <td class="num">${fmt(f.p)}</td>
-      <td class="num hm ${cls(dl)}">${dl == null ? "—" : sgn(dl) + fmt(dl)}</td>
+      <td class="num">${fmt(f.p)}</td>`;
+    h += comunes + (niv
+      ? `<td class="num ${cls(f.a1)}" style="${heat(f.a1, 40)}">${pct(f.a1)}</td>
+         ${celdaNiv(f.s50, f.v50, 10)}${celdaNiv(f.s200, f.v200, 20)}${celdaNiv(f.hi, f.dh, 30)}${celdaNiv(f.lo, f.vlo, 50)}
+         <td class="hm">${f.dvp != null ? `<span class="yl" style="${yHeat(f.dvp)}">${fmt(f.dvp)} %</span>` : '<span class="flat">—</span>'}</td></tr>`
+      : `<td class="num hm ${cls(dl)}">${dl == null ? "—" : sgn(dl) + fmt(dl)}</td>
       <td>${chip(f.d1)}</td>
       <td class="num hm ${cls(f.m1)}" style="${heat(f.m1, 10)}">${pct(f.m1)}</td>
       <td class="num hm ${cls(f.ytd)}" style="${heat(f.ytd, 40)}">${pct(f.ytd)}</td>
       <td class="num hm ${cls(f.dh)}" style="${heat(f.dh, 30)}">${pct(f.dh)}</td>
       <td class="hm"><span class="tag ${esc(f.riesgo.split(" ")[0])}">${esc(f.riesgo)}</span></td>
-      <td class="hm">${spark(f.spark, 84, 28)}</td></tr>`;
-    if (abierto) h += `<tr class="detail ${CATC[f.cat] || ""}"><td colspan="11"><div class="dw">${detalle(f)}</div></td></tr>`;
+      <td class="hm">${spark(f.spark, 84, 28)}</td></tr>`);
+    if (abierto) h += `<tr class="detail ${CATC[f.cat] || ""}"><td colspan="12"><div class="dw">${detalle(f)}</div></td></tr>`;
   }
   $("#tbl").innerHTML = h + "</tbody>";
-  $("#count").textContent = total ? `Mostrando ${fmt(vis.length, 0)} de ${fmt(total, 0)} instrumentos.` + (S.solo && S.cat === "Todos" ? " Los futuros se ven en su pestaña." : "") : "Ningún instrumento cumple estos filtros. Prueba subir el precio máximo o quitar el filtro de color.";
+  $("#count").textContent = total ? `Mostrando ${fmt(vis.length, 0)} de ${fmt(total, 0)} instrumentos.` + (S.solo && S.cat === "Todos" ? " Los futuros se ven en su pestaña." : "") + (niv ? " Cada celda indica cuánto se aleja el precio actual de ese nivel (+ por encima, − por debajo) y, debajo, el valor del nivel." : "") : "Ningún instrumento cumple estos filtros. Prueba subir el precio máximo o quitar el filtro de color.";
   $("#more").hidden = total <= vis.length;
+  document.querySelectorAll("#vista button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.vista));
   setTW();
 }
 
@@ -756,7 +829,81 @@ function goTo(t) {
   tabs(); sectores(); tabla();
   $("#explorador").scrollIntoView({block: "start"});
 }
-function todo() { resumen(); ideas(); tabla(); }
+function todo() { resumen(); ideas(); tabla(); if (typeof dividendos === "function" && $("#dtbl")) dividendos(); }
+
+/* ---------- dividendos ---------- */
+const FRECO = {"Mensual": 1, "Trimestral": 2, "Semestral": 3, "Anual": 4, "Anual o irregular": 5, "Irregular": 6};
+const FRCL = {"Mensual": "fm", "Trimestral": "ft", "Semestral": "fs", "Anual": "fa"};
+const yHeat = x => x == null ? "" : `background:color-mix(in srgb, var(--s-div) ${Math.round(10 + Math.min(1, x / 6) * 38)}%, transparent)`;
+function dvValor(f, k) {
+  const m = S.dv.monto;
+  switch (k) {
+    case "n": return f.n;
+    case "p": return f.p;
+    case "pct": return f.dvp;
+    case "anual": return f.dv ? f.dv.anual : null;
+    case "frec": return f.dv ? FRECO[f.dv.frec] : null;
+    case "ult": return f.dv ? f.dv.ult_f : null;
+    case "prox": return f.dv ? f.dv.prox : null;
+    case "sim": return f.dvp != null ? m * f.dvp / 100 : null;
+  }
+  return null;
+}
+function dvLista() {
+  const q = S.dv, txt = q.q.toLowerCase();
+  return I.filter(f => f.cat !== "Futuro" && f.dvp != null && f.dvp > 0)
+    .filter(f => !q.tipo || f.cat === q.tipo)
+    .filter(f => !q.frec || (f.dv && f.dv.frec === q.frec))
+    .filter(f => f.dvp >= (q.min || 0))
+    .filter(f => !q.solo || f.p <= S.limit)
+    .filter(f => !txt || f.t.toLowerCase().includes(txt) || f.n.toLowerCase().includes(txt));
+}
+function dividendos() {
+  const q = S.dv;
+  const l = dvLista().sort((a, b) => {
+    const x = dvValor(a, q.sort), y = dvValor(b, q.sort);
+    if (x == null && y == null) return 0;
+    if (x == null) return 1;
+    if (y == null) return -1;
+    return (typeof x === "string" ? x.localeCompare(y, "es") : x - y) * q.dir;
+  });
+  const vis = l.slice(0, q.shown);
+  const th = (key, txt, c = "") => `<th class="${c}"><button data-dk="${key}" data-on="${q.sort === key ? 1 : 0}" aria-label="Ordenar por ${txt}">${txt}${q.sort === key ? (q.dir < 0 ? " ↓" : " ↑") : ""}</button></th>`;
+  let h = `<thead><tr>${th("n", "Instrumento", "l")}${th("p", "Precio de 1 acción (US$)")}${th("pct", "Dividendo anual (%)")}${th("anual", "Dividendo por 1 acción al año (US$)")}${th("frec", "Forma de pago", "l")}${th("ult", "Último pago (ex-dividendo)", "hm")}${th("prox", "Próximo (estimado)", "hm")}${th("sim", `Con US$ ${fmt(q.monto, 0)} recibirías al año`)}</tr></thead><tbody>`;
+  for (const f of vis) {
+    const d = f.dv, acc = q.monto / f.p;
+    h += `<tr class="row ${CATC[f.cat] || ""}" tabindex="0" data-t="${esc(f.t)}" title="Ver gráfico y detalle">
+      <td class="who l"><b>${esc(f.n)}</b><small>${tag(f)} ${esc(f.sec || "")}</small></td>
+      <td class="num">${fmt(f.p)}</td>
+      <td><span class="yl" style="${yHeat(f.dvp)}">${fmt(f.dvp)} %</span>${f.dvp > 8 ? '<span class="wr" title="Rendimiento muy alto: revisa por qué cayó el precio o si el dividendo está en riesgo">⚠</span>' : ""}</td>
+      <td class="num">${d ? fmt(d.anual) : "—"}</td>
+      <td class="l">${d ? `<span class="fq ${FRCL[d.frec] || "fi"}">${esc(d.frec)}</span><span class="sub">${d.n ? `${d.n} ${d.n === 1 ? "pago" : "pagos"} al año de ≈ US$ ${fmt(d.anual / d.n)}` : ""}</span>` : "—"}</td>
+      <td class="num hm">${d ? `US$ ${fmt(d.ult)}<span class="sub">${fdate(d.ult_f)}</span>` : "—"}</td>
+      <td class="num hm">${d && d.prox ? "≈ " + fdate(d.prox) : "—"}</td>
+      <td class="num">≈ US$ ${fmt(q.monto * f.dvp / 100)}<span class="sub">${fmt(acc, 2)} ${acc === 1 ? "acción" : "acciones"}</span></td></tr>`;
+  }
+  $("#dtbl").innerHTML = h + "</tbody>";
+  $("#dvcount").textContent = (l.length ? `${fmt(l.length, 0)} instrumentos pagan dividendos con estos filtros.` : "Ningún instrumento cumple estos filtros. Prueba quitar el precio máximo o bajar el rendimiento mínimo.")
+    + (HAS_DV ? "" : " Esta versión de los datos solo trae el porcentaje: actualiza el script de Python para ver monto, forma de pago y fechas.");
+  $("#dvmore").hidden = l.length <= vis.length;
+}
+function dvInit() {
+  const frs = [...new Set(I.filter(f => f.dv).map(f => f.dv.frec))].sort((a, b) => (FRECO[a] || 9) - (FRECO[b] || 9));
+  $("#dvfrec").innerHTML = `<option value="">Cualquier forma de pago</option>` + frs.map(x => `<option>${esc(x)}</option>`).join("");
+  $("#dvq").addEventListener("input", e => { S.dv.q = e.target.value.trim(); S.dv.shown = 40; dividendos(); });
+  $("#dvtipo").addEventListener("change", e => { S.dv.tipo = e.target.value; S.dv.shown = 40; dividendos(); });
+  $("#dvfrec").addEventListener("change", e => { S.dv.frec = e.target.value; S.dv.shown = 40; dividendos(); });
+  $("#dvmin").addEventListener("input", e => { S.dv.min = parseFloat(e.target.value) || 0; S.dv.shown = 40; dividendos(); });
+  $("#dvmonto").addEventListener("input", e => { const v = parseFloat(e.target.value); if (v > 0) { S.dv.monto = v; dividendos(); } });
+  $("#dvsolo").addEventListener("change", e => { S.dv.solo = e.target.checked; S.dv.shown = 40; dividendos(); });
+  $("#dvmore").addEventListener("click", () => { S.dv.shown += 40; dividendos(); });
+  $("#dtbl").addEventListener("click", e => {
+    const b = e.target.closest("[data-dk]");
+    if (b) { const k = b.dataset.dk; if (S.dv.sort === k) S.dv.dir *= -1; else { S.dv.sort = k; S.dv.dir = (k === "n" || k === "frec" || k === "prox") ? 1 : -1; } dividendos(); return; }
+    const r = e.target.closest("tr.row"); if (r) goTo(r.dataset.t);
+  });
+  $("#dtbl").addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.matches("tr.row")) { e.preventDefault(); e.target.click(); } });
+}
 
 /* ---------- eventos ---------- */
 $("#limit").value = S.limit;
@@ -787,6 +934,12 @@ $("#tbl").addEventListener("keydown", e => {
 ["#ideas", "#movers", "#pulse"].forEach(sel => $(sel).addEventListener("click", e => {
   const b = e.target.closest("[data-t]"); if (b) goTo(b.dataset.t);
 }));
+$("#vista").addEventListener("click", e => {
+  const b = e.target.closest("[data-v]"); if (!b) return;
+  S.vista = b.dataset.v; S.shown = 100;
+  S.sort = S.vista === "niv" ? "a1" : (S.cat === "Futuro" ? "n" : "score"); S.dir = S.vista === "niv" ? -1 : (S.cat === "Futuro" ? 1 : -1);
+  tabla();
+});
 $("#cchips").addEventListener("click", e => { const b = e.target.closest("[data-rm]"); if (b) rmCmp(b.dataset.rm); });
 $("#cadd").addEventListener("change", e => {
   const v = e.target.value.trim().toLowerCase();
@@ -799,7 +952,7 @@ $("#cadd").addEventListener("change", e => {
 $("#cdl").innerHTML = [...I].sort((a, b) => a.n.localeCompare(b.n, "es")).map(f => `<option value="${esc(f.n)} (${esc(f.t)})"></option>`).join("");
 S.cmp = loadCmp() || ["SPY", "QQQ", "VT", "GLD"].filter(t => BYT[t]).slice(0, 4);
 if (!S.cmp.length) S.cmp = I.filter(f => f.cat !== "Futuro").slice(0, 3).map(f => f.t);
-header(); yields(); tabs(); sectores(); todo(); compare();
+header(); yields(); tabs(); sectores(); dvInit(); todo(); compare();
 </script>
 </body>
 </html>
