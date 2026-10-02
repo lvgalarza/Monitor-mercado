@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monitor de mercado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F1F4F3; --surface:#FFFFFF; --ink:#16222B; --muted:#5A6A74; --line:#D8DFE2; --soft:#E8EEEE;
+  --accent:#0E5A6B; --accent-ink:#FFFFFF;
+  --up:#17794A; --down:#B23A32; --amber:#B7791F; --grey:#8A979E;
+  --up-bg:#E3F2EA; --down-bg:#F8E6E4; --amber-bg:#FBF0DB;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;
+  --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1619; --surface:#16222A; --ink:#E5ECEF; --muted:#9FB0B8; --line:#2A3A44; --soft:#1D2C35;
+    --accent:#58B6C8; --accent-ink:#0E1619;
+    --up:#4CC38A; --down:#F0847B; --amber:#E3AE55; --grey:#7D8C94;
+    --up-bg:#16372A; --down-bg:#412120; --amber-bg:#3B3018;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1619; --surface:#16222A; --ink:#E5ECEF; --muted:#9FB0B8; --line:#2A3A44; --soft:#1D2C35;
+  --accent:#58B6C8; --accent-ink:#0E1619;
+  --up:#4CC38A; --down:#F0847B; --amber:#E3AE55; --grey:#7D8C94;
+  --up-bg:#16372A; --down-bg:#412120; --amber-bg:#3B3018;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 64px}
+h1,h2,h3{font-family:var(--serif);font-weight:600;margin:0;letter-spacing:-.01em}
+h1{font-size:34px;line-height:1.1}
+h2{font-size:24px;line-height:1.2;margin-bottom:6px}
+h3{font-size:18px}
+p{margin:0}
+.num{font-variant-numeric:tabular-nums}
+.up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--muted)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+
+header.top{padding:28px 0 18px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+header.top .sub{color:var(--muted);margin-top:6px;max-width:60ch}
+.stamp{color:var(--muted);font-size:13px;text-align:right}
+.banner{background:var(--amber-bg);border:1px solid var(--amber);color:var(--ink);padding:10px 14px;border-radius:6px;margin-bottom:16px;font-size:14px}
+
+.pulse{display:flex;flex-wrap:wrap;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);background:var(--surface)}
+.pulse>div{flex:1 1 150px;padding:12px 16px;border-right:1px solid var(--line)}
+.pulse>div:last-child{border-right:0}
+.pulse .k{color:var(--muted);font-size:13px}
+.pulse .v{font-size:20px;font-weight:600}
+.pulse .c{font-size:13px;font-weight:500}
+
+section{margin-top:44px}
+.lead{color:var(--muted);max-width:72ch;margin-bottom:16px}
+.ctrl{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin:12px 0 18px}
+label.f{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
+input,select,button{font:inherit;color:inherit}
+input[type=number],input[type=search],select{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px;min-height:38px}
+input[type=number]{width:96px}
+input[type=search]{width:220px}
+button{cursor:pointer}
+
+.ideas{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.ideas .col{background:var(--surface);border-top:2px solid var(--accent);padding:14px 4px 6px}
+.ideas .col h3{padding:0 14px 8px}
+.idea{display:grid;grid-template-columns:18px 1fr auto;gap:0 10px;align-items:center;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:10px 14px}
+.idea:hover{background:var(--soft)}
+.idea .nm{font-weight:600}
+.idea .sb{grid-column:2;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.idea .pr{grid-column:3;grid-row:1;text-align:right;font-weight:600}
+.idea .ch{grid-column:3;grid-row:2;text-align:right;font-size:13px}
+.idea .dot{grid-row:1 / span 2}
+.empty{padding:14px;color:var(--muted)}
+
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block;flex:none;background:var(--grey)}
+.dot.verde{background:var(--up)} .dot.amarillo{background:var(--amber)} .dot.rojo{background:var(--down)}
+.dot.gris{background:transparent;border:2px solid var(--grey)}
+
+.yields{display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:2px solid var(--accent);border-bottom:1px solid var(--line)}
+.yields>div{padding:14px 16px;border-right:1px solid var(--line)}
+.yields>div:last-child{border-right:0}
+.yields .k{color:var(--muted);font-size:13px}
+.yields .v{font-family:var(--serif);font-size:28px;font-weight:600;line-height:1.2}
+.yields .s{font-size:13px;color:var(--muted)}
+.curva{margin-top:12px;color:var(--muted);max-width:80ch}
+
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.tab{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 14px;min-height:36px}
+.tab[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.hint{color:var(--muted);font-size:13px}
+.tablebox{overflow-x:auto;background:var(--surface);border-top:2px solid var(--ink);border-bottom:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;min-width:760px}
+th,td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:middle}
+th:first-child,td:first-child{text-align:left}
+th.l,td.l{text-align:left}
+th{font-weight:600;font-size:13px;color:var(--muted);background:var(--surface);position:sticky;top:0}
+th button{background:none;border:0;padding:0;font-weight:600;font-size:13px;color:var(--muted)}
+th button[data-on="1"]{color:var(--ink)}
+tr.row{cursor:pointer}
+tr.row:hover td{background:var(--soft)}
+tr.row[aria-expanded="true"] td{background:var(--soft)}
+td.who{white-space:normal;min-width:200px}
+td.who b{font-weight:600}
+td.who small{display:block;color:var(--muted);font-size:12.5px;max-width:30ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc{display:inline-flex;align-items:center;gap:8px}
+.tag{display:inline-block;font-size:12.5px;padding:1px 8px;border-radius:999px;border:1px solid var(--line)}
+.tag.Bajo{color:var(--up);border-color:var(--up)} .tag.Medio{color:var(--amber);border-color:var(--amber)}
+.tag.Alto,.tag.Muy{color:var(--down);border-color:var(--down)}
+tr.detail td{background:var(--soft);white-space:normal;text-align:left;padding:18px 20px}
+.dgrid{display:grid;grid-template-columns:1.3fr 1fr;gap:28px}
+.dgrid h4{margin:0 0 6px;font-size:14px}
+.dgrid ul{margin:0 0 12px;padding:0;list-style:none}
+.dgrid li{padding:2px 0 2px 22px;position:relative}
+.dgrid li.p::before{content:"+";position:absolute;left:4px;color:var(--up);font-weight:700}
+.dgrid li.n::before{content:"!";position:absolute;left:6px;color:var(--down);font-weight:700}
+dl.m{display:grid;grid-template-columns:auto auto;gap:4px 18px;margin:0}
+dl.m dt{color:var(--muted)} dl.m dd{margin:0;text-align:right}
+.warn{background:var(--down-bg);border-left:3px solid var(--down);padding:10px 12px;margin-bottom:12px}
+.more{display:block;margin:14px auto 0;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 18px}
+
+details{background:var(--surface);border-top:1px solid var(--line);padding:0 16px}
+details:last-of-type{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;padding:14px 0;font-weight:600;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"+";display:inline-block;width:22px;color:var(--accent);font-weight:700}
+details[open] summary::before{content:"−"}
+details .in{padding:0 0 16px 22px;max-width:80ch}
+details .in p+p,details .in ul{margin-top:8px}
+details .in li{margin-bottom:4px}
+.gl dt{font-weight:600;margin-top:10px}
+.gl dd{margin:2px 0 0;color:var(--muted)}
+footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:90ch}
+
+@media (max-width:860px){
+  .ideas{grid-template-columns:1fr}
+  .yields{grid-template-columns:repeat(2,1fr)}
+  .yields>div{border-bottom:1px solid var(--line)}
+  .dgrid{grid-template-columns:1fr}
+  .hm{display:none}
+  h1{font-size:28px}
+  .stamp{text-align:left}
+  input[type=search]{width:100%}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Monitor de mercado</h1>
+      <p class="sub">Precios y tendencias de acciones, ETFs, bonos y futuros, explicados en lenguaje sencillo. Pensado para empezar con poco capital.</p>
+    </div>
+    <div class="stamp num" id="stamp"></div>
+  </header>
+  <div id="demo"></div>
+  <div class="pulse" id="pulse" aria-label="Resumen del mercado"></div>
+
+  <section id="ideas-sec">
+    <h2>Para estudiar hoy</h2>
+    <p class="lead">Los instrumentos con mejores señales de tendencia, calma y ritmo entre los que cuestan hasta el precio que elijas. Es un filtro para ordenar tu lectura, no una recomendación de compra.</p>
+    <div class="ctrl">
+      <label class="f">Precio máximo por unidad (US$)
+        <input type="number" id="limit" min="1" step="5" inputmode="decimal">
+      </label>
+      <span class="hint">Cambiarlo actualiza también la tabla de abajo.</span>
+    </div>
+    <div class="ideas" id="ideas"></div>
+  </section>
+
+  <section id="bonos-sec">
+    <h2>Rendimiento de los bonos del Tesoro de EE. UU.</h2>
+    <p class="lead">Es el interés anual que paga el gobierno de EE. UU. por prestarle dinero. Cuando el rendimiento sube, el precio de los bonos ya emitidos baja, y al revés.</p>
+    <div class="yields" id="yields"></div>
+    <p class="curva" id="curva"></p>
+  </section>
+
+  <section id="explorador">
+    <h2>Explorador</h2>
+    <p class="lead">Toca una fila para ver por qué tiene su color y qué datos lo respaldan. Ordena con los títulos de columna.</p>
+    <div class="tabs" id="tabs" role="group" aria-label="Tipo de instrumento"></div>
+    <div class="ctrl">
+      <input type="search" id="q" placeholder="Buscar por símbolo o nombre" aria-label="Buscar">
+      <select id="sec" aria-label="Sector"></select>
+      <select id="sem" aria-label="Semáforo">
+        <option value="">Todos los colores</option>
+        <option value="verde">Verde: señales favorables</option>
+        <option value="amarillo">Amarillo: señales mixtas</option>
+        <option value="rojo">Rojo: señales débiles</option>
+      </select>
+      <label class="f"><input type="checkbox" id="solo"> Solo hasta el precio máximo</label>
+    </div>
+    <p class="hint" id="count" style="margin-bottom:8px"></p>
+    <div class="tablebox"><table id="tbl"></table></div>
+    <button class="more" id="more" hidden>Mostrar más</button>
+  </section>
+
+  <section id="guia">
+    <h2>Guía para leer el tablero</h2>
+    <details open><summary>Cómo funciona el semáforo</summary><div class="in">
+      <p>Cada acción, ETF y bono recibe un puntaje de 0 a 100 con reglas fijas que se ven en cada fila: tendencia (precio frente a sus promedios de 50 y 200 días), calma (volatilidad), ritmo reciente (RSI), distancia a su máximo anual y resultado del último año.</p>
+      <ul>
+        <li><span class="dot verde"></span> Verde (70 o más): la mayoría de las señales son favorables.</li>
+        <li><span class="dot amarillo"></span> Amarillo (45 a 69): señales mixtas.</li>
+        <li><span class="dot rojo"></span> Rojo (menos de 45): la mayoría de las señales son débiles.</li>
+        <li><span class="dot gris"></span> Sin color: los futuros son solo informativos por su riesgo.</li>
+      </ul>
+      <p>El semáforo describe el pasado reciente del precio. No incluye noticias, resultados de la empresa ni el precio justo, y un verde no garantiza ganancias.</p>
+    </div></details>
+    <details><summary>Un precio bajo no significa barato</summary><div class="in">
+      <p>Una acción de US$ 30 no es más barata que una de US$ 300: depende de cuánto vale la empresa en total y de cuánto gana. Fijar un tope de precio sirve para ver qué cabe en tu presupuesto, pero muchos corredores permiten comprar fracciones de acción, y con eso el precio por unidad deja de ser una barrera. Verifica si el tuyo lo ofrece.</p>
+      <p>Para pocos ahorros, un ETF amplio (por ejemplo, uno del S&P 500) reparte tu dinero entre cientos de empresas en una sola compra, algo difícil de lograr con acciones sueltas.</p>
+    </div></details>
+    <details><summary>Glosario</summary><div class="in"><dl class="gl">
+      <dt>Hoy, Mes, Año</dt><dd>Cuánto cambió el precio desde el cierre anterior, hace un mes (21 sesiones) y desde el 1 de enero.</dd>
+      <dt>Vs. máx. 52 sem.</dt><dd>Qué tan lejos está el precio del punto más alto del último año. −30 % significa que está 30 % por debajo.</dd>
+      <dt>Promedio de 50 y 200 días</dt><dd>El precio promedio de las últimas 10 y 40 semanas. Si el precio está encima, la tendencia suele ser alcista.</dd>
+      <dt>Volatilidad</dt><dd>Qué tanto se mueve el precio. Bajo: menos de 20 % anual; medio: 20 a 35 %; alto: más de 35 %.</dd>
+      <dt>RSI</dt><dd>Mide el ritmo de las últimas semanas de 0 a 100. Sobre 70 suele indicar que subió muy rápido; bajo 30, que cayó con fuerza.</dd>
+      <dt>P/E (precio/utilidad)</dt><dd>Cuántos dólares se pagan por cada dólar de utilidad anual de la empresa. Es útil solo al comparar empresas similares.</dd>
+      <dt>Dividendo</dt><dd>Parte de las utilidades que la empresa reparte cada año, como porcentaje del precio.</dd>
+      <dt>ETF</dt><dd>Fondo que cotiza como una acción y contiene muchos activos (acciones, bonos u oro).</dd>
+      <dt>Futuro</dt><dd>Contrato para comprar o vender un activo a un precio fijado hoy. Se opera con apalancamiento: las pérdidas pueden superar el dinero depositado.</dd>
+    </dl></div></details>
+    <details><summary>Antes de invertir</summary><div class="in"><ul>
+      <li>Conserva primero un fondo para imprevistos que no necesites tocar para invertir.</li>
+      <li>Invertir montos pequeños con regularidad reduce el riesgo de entrar justo en un mal momento.</li>
+      <li>Revisa las comisiones de tu corredor: con montos pequeños pueden consumir una parte importante del rendimiento.</li>
+      <li>Los futuros están en el tablero para aprender cómo se mueven. Con pocos ahorros no son una herramienta adecuada.</li>
+      <li>Este tablero no calcula impuestos. Verifica con la normativa del SRI el tratamiento de las rentas del exterior y las obligaciones de reporte de inversiones fuera del país.</li>
+    </ul></div></details>
+  </section>
+
+  <footer>
+    Fuentes: precios de Yahoo Finance (vía yfinance, no oficial) y rendimientos del Tesoro de FRED. Los precios corresponden al último cierre disponible y pueden tener errores o retrasos: confírmalos con tu corredor antes de operar. Esta herramienta informa y no es asesoría financiera.
+  </footer>
+</div>
+
+<script>
+const D = __DATOS_JSON__;
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = (x, d = 2) => x == null ? "—" : x.toLocaleString("es-EC", {minimumFractionDigits: d, maximumFractionDigits: d});
+const pct = x => x == null ? "—" : (x > 0 ? "+" : "") + fmt(x) + " %";
+const cls = x => x == null ? "flat" : x > 0 ? "up" : x < 0 ? "down" : "flat";
+const SEM = {verde: "Señales favorables", amarillo: "Señales mixtas", rojo: "Señales débiles", gris: "Solo informativo"};
+const CATS = [["Todos", "Todos"], ["Acción", "Acciones"], ["ETF", "ETFs"], ["Bono", "Bonos (ETF)"], ["Futuro", "Futuros"]];
+const RIESGO = {"Bajo": 1, "Medio": 2, "Alto": 3, "Muy alto": 4};
+const S = {cat: "Todos", q: "", sec: "", sem: "", solo: true, limit: D.umbral, sort: "score", dir: -1, open: null, shown: 100};
+const I = D.instrumentos;
+
+const dot = s => `<span class="dot ${s}" role="img" aria-label="${SEM[s]}" title="${SEM[s]}"></span>`;
+
+function spark(a) {
+  if (!a || a.length < 2) return "";
+  const w = 84, h = 26, mn = Math.min(...a), mx = Math.max(...a), rg = (mx - mn) || 1;
+  const pts = a.map((v, i) => `${(i / (a.length - 1) * w).toFixed(1)},${(h - 2 - (v - mn) / rg * (h - 4)).toFixed(1)}`).join(" ");
+  const c = a[a.length - 1] >= a[0] ? "var(--up)" : "var(--down)";
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><polyline fill="none" stroke="${c}" stroke-width="1.6" points="${pts}"/></svg>`;
+}
+
+/* ---------- encabezado y pulso ---------- */
+function header() {
+  $("#stamp").innerHTML = `Actualizado: ${esc(D.generado)}<br>Último cierre de mercado: ${esc(D.fecha_mercado)}`;
+  if (D.demo) $("#demo").innerHTML = `<div class="banner"><b>Datos de demostración.</b> Los precios de esta versión son inventados para probar el diseño. Ejecuta el script con datos reales para ver el mercado.</div>`;
+  const items = [["SPY", "S&P 500"], ["QQQ", "Nasdaq 100"], ["VT", "Mercado mundial"], ["GC", "Oro"], ["CL", "Petróleo"]];
+  let h = "";
+  for (const [t, n] of items) {
+    const f = I.find(x => x.t === t);
+    if (f) h += `<div><div class="k">${n}</div><div class="v num">${fmt(f.p)}</div><div class="c num ${cls(f.d1)}">${pct(f.d1)} hoy</div></div>`;
+  }
+  const y = D.rendimientos.find(x => x.id === "DGS10");
+  if (y) h += `<div><div class="k">Bono del Tesoro 10 años</div><div class="v num">${fmt(y.valor)} %</div><div class="c num flat">${y.cambio_pb > 0 ? "+" : ""}${fmt(y.cambio_pb, 0)} pb hoy</div></div>`;
+  $("#pulse").innerHTML = h;
+}
+
+/* ---------- ideas ---------- */
+function ideas() {
+  const grupos = [["Acción", "Acciones"], ["ETF", "ETFs diversificados"], ["Bono", "Bonos (vía ETF)"]];
+  $("#ideas").innerHTML = grupos.map(([c, titulo]) => {
+    const l = I.filter(f => f.cat === c && f.score != null && f.p <= S.limit)
+      .sort((a, b) => b.score - a.score || (a.vol ?? 99) - (b.vol ?? 99)).slice(0, 5);
+    const filas = l.length ? l.map(f => `
+      <button class="idea" data-t="${esc(f.t)}">
+        ${dot(f.sem)}<span class="nm">${esc(f.t)}</span><span class="pr num">US$ ${fmt(f.p)}</span>
+        <span class="sb">${esc(f.n)} · riesgo ${f.riesgo.toLowerCase()}</span><span class="ch num ${cls(f.d1)}">${pct(f.d1)}</span>
+      </button>`).join("") : `<p class="empty">Ninguno cuesta menos de US$ ${fmt(S.limit, 0)}.</p>`;
+    return `<div class="col"><h3>${titulo}</h3>${filas}</div>`;
+  }).join("");
+}
+
+/* ---------- rendimientos ---------- */
+function yields() {
+  $("#yields").innerHTML = D.rendimientos.map(y => `
+    <div><div class="k">${esc(y.nombre)}</div><div class="v num">${fmt(y.valor)} %</div>
+    <div class="s num">${y.cambio_pb > 0 ? "+" : ""}${fmt(y.cambio_pb, 0)} pb hoy</div>
+    <div class="s num">hace 1 mes: ${y.hace_1m != null ? fmt(y.hace_1m) + " %" : "—"}</div>
+    <div class="s num">hace 1 año: ${y.hace_1a != null ? fmt(y.hace_1a) + " %" : "—"}</div></div>`).join("");
+  $("#curva").textContent = D.curva ? D.curva.texto + ` (diferencia 10 años − 2 años: ${fmt(D.curva.spread)} puntos).` : "";
+}
+
+/* ---------- explorador ---------- */
+function pasa(f) {
+  if (S.cat !== "Todos" && f.cat !== S.cat) return false;
+  if (S.q) {
+    const q = S.q.toLowerCase();
+    if (I.some(x => x.t.toLowerCase() === q)) { if (f.t.toLowerCase() !== q) return false; }
+    else if (!(f.t.toLowerCase().includes(q) || f.n.toLowerCase().includes(q))) return false;
+  }
+  if (S.sec && f.sec !== S.sec) return false;
+  if (S.sem && f.sem !== S.sem) return false;
+  if (S.solo) {
+    if (f.cat === "Futuro") return S.cat === "Futuro";
+    if (f.p > S.limit) return false;
+  }
+  return true;
+}
+const val = (f, k) => k === "t" ? f.t : k === "riesgo" ? RIESGO[f.riesgo] : f[k];
+
+function sectores() {
+  const set = [...new Set(I.filter(f => S.cat === "Todos" || f.cat === S.cat).map(f => f.sec))].sort((a, b) => a.localeCompare(b, "es"));
+  if (S.sec && !set.includes(S.sec)) S.sec = "";
+  $("#sec").innerHTML = `<option value="">Todos los sectores</option>` + set.map(s => `<option ${s === S.sec ? "selected" : ""}>${esc(s)}</option>`).join("");
+}
+
+function detalle(f) {
+  if (f.cat === "Futuro") {
+    return `<div class="warn"><b>Un contrato equivale a unos US$ ${fmt(f.contrato, 0)}</b> (${esc(f.unidad)}). Se opera con apalancamiento: se deposita una fracción de ese valor, pero las pérdidas se calculan sobre el total y pueden superar lo depositado. Aquí se muestra solo para seguir el comportamiento del precio.</div>
+      <dl class="m"><dt>Variación 5 días</dt><dd class="num">${pct(f.d5)}</dd><dt>Variación 3 meses</dt><dd class="num">${pct(f.m3)}</dd>
+      <dt>Máximo 52 semanas</dt><dd class="num">${fmt(f.hi)}</dd><dt>Mínimo 52 semanas</dt><dd class="num">${fmt(f.lo)}</dd>
+      <dt>Volatilidad anual</dt><dd class="num">${f.vol != null ? fmt(f.vol, 0) + " %" : "—"}</dd></dl>`;
+  }
+  const li = (a, c) => a.map(t => `<li class="${c}">${esc(t)}</li>`).join("");
+  return `<div class="dgrid"><div>
+      <h4>Puntaje ${f.score} de 100 · ${SEM[f.sem]}</h4>
+      <ul>${li(f.pos, "p")}${li(f.neg, "n")}</ul>
+      <p class="hint">Este puntaje usa solo precios pasados. No incluye noticias ni resultados de la empresa.</p>
+    </div><dl class="m">
+      <dt>Variación 5 días</dt><dd class="num">${pct(f.d5)}</dd>
+      <dt>Variación 3 meses</dt><dd class="num">${pct(f.m3)}</dd>
+      <dt>Máximo 52 semanas</dt><dd class="num">US$ ${fmt(f.hi)}</dd>
+      <dt>Mínimo 52 semanas</dt><dd class="num">US$ ${fmt(f.lo)}</dd>
+      <dt>Promedio 50 días</dt><dd class="num">${f.s50 != null ? "US$ " + fmt(f.s50) : "—"}</dd>
+      <dt>Promedio 200 días</dt><dd class="num">${f.s200 != null ? "US$ " + fmt(f.s200) : "—"}</dd>
+      <dt>Volatilidad anual</dt><dd class="num">${f.vol != null ? fmt(f.vol, 0) + " %" : "—"}</dd>
+      <dt>RSI</dt><dd class="num">${f.rsi != null ? fmt(f.rsi, 0) : "—"}</dd>
+      ${f.cat === "Acción" ? `<dt>P/E</dt><dd class="num">${f.pe != null ? fmt(f.pe, 1) : "—"}</dd>` : ""}
+      ${f.cat !== "Bono" ? `<dt>Dividendo anual</dt><dd class="num">${f.div != null ? fmt(f.div) + " %" : "—"}</dd>` : ""}
+    </dl></div>`;
+}
+
+function tabla() {
+  const k = S.sort, d = S.dir;
+  const l = I.filter(pasa).sort((a, b) => {
+    const x = val(a, k), y = val(b, k);
+    if (x == null && y == null) return 0;
+    if (x == null) return 1;
+    if (y == null) return -1;
+    return (typeof x === "string" ? x.localeCompare(y) : x - y) * d;
+  });
+  const total = l.length, vis = l.slice(0, S.shown);
+  const th = (key, txt, c = "") => `<th class="${c}"><button data-k="${key}" data-on="${S.sort === key ? 1 : 0}" aria-label="Ordenar por ${txt}">${txt}${S.sort === key ? (S.dir < 0 ? " ↓" : " ↑") : ""}</button></th>`;
+  let h = `<thead><tr>${th("score", "Semáforo")}${th("t", "Instrumento", "l")}${th("p", "Precio (US$)")}${th("d1", "Hoy")}${th("m1", "Mes", "hm")}${th("ytd", "Año", "hm")}${th("dh", "Vs. máx. 52 sem.", "hm")}${th("riesgo", "Riesgo", "hm")}<th class="hm">60 días</th></tr></thead><tbody>`;
+  for (const f of vis) {
+    const abierto = S.open === f.t;
+    h += `<tr class="row" tabindex="0" data-t="${esc(f.t)}" aria-expanded="${abierto}">
+      <td><span class="sc">${dot(f.sem)}<span class="num">${f.score ?? "—"}</span></span></td>
+      <td class="who l"><b>${esc(f.t)}</b><small>${esc(f.n)}</small></td>
+      <td class="num">${fmt(f.p)}</td><td class="num ${cls(f.d1)}">${pct(f.d1)}</td>
+      <td class="num hm ${cls(f.m1)}">${pct(f.m1)}</td><td class="num hm ${cls(f.ytd)}">${pct(f.ytd)}</td>
+      <td class="num hm ${cls(f.dh)}">${pct(f.dh)}</td>
+      <td class="hm"><span class="tag ${f.riesgo.split(" ")[0]}">${f.riesgo}</span></td>
+      <td class="hm">${spark(f.spark)}</td></tr>`;
+    if (abierto) h += `<tr class="detail"><td colspan="9">${detalle(f)}</td></tr>`;
+  }
+  $("#tbl").innerHTML = h + "</tbody>";
+  $("#count").textContent = total ? `Mostrando ${fmt(vis.length, 0)} de ${fmt(total, 0)} instrumentos.` + (S.solo && S.cat === "Todos" ? " Los futuros se ven en su pestaña." : "") : "Ningún instrumento cumple estos filtros. Prueba subir el precio máximo o quitar el filtro de color.";
+  $("#more").hidden = total <= vis.length;
+}
+
+function tabs() {
+  $("#tabs").innerHTML = CATS.map(([c, n]) => `<button class="tab" data-c="${c}" aria-pressed="${S.cat === c}">${n}</button>`).join("");
+}
+
+function todo() { ideas(); tabla(); }
+
+/* ---------- eventos ---------- */
+$("#limit").value = S.limit;
+$("#solo").checked = S.solo;
+$("#limit").addEventListener("input", e => { const v = parseFloat(e.target.value); if (v > 0) { S.limit = v; S.shown = 100; todo(); } });
+$("#q").addEventListener("input", e => { S.q = e.target.value.trim(); S.shown = 100; tabla(); });
+$("#sec").addEventListener("change", e => { S.sec = e.target.value; S.shown = 100; tabla(); });
+$("#sem").addEventListener("change", e => { S.sem = e.target.value; S.shown = 100; tabla(); });
+$("#solo").addEventListener("change", e => { S.solo = e.target.checked; S.shown = 100; tabla(); });
+$("#more").addEventListener("click", () => { S.shown += 100; tabla(); });
+$("#tabs").addEventListener("click", e => {
+  const b = e.target.closest("[data-c]"); if (!b) return;
+  S.cat = b.dataset.c; S.sec = ""; S.shown = 100; S.open = null;
+  S.sort = S.cat === "Futuro" ? "t" : "score"; S.dir = S.cat === "Futuro" ? 1 : -1;
+  tabs(); sectores(); tabla();
+});
+$("#tbl").addEventListener("click", e => {
+  const b = e.target.closest("[data-k]");
+  if (b) { const k = b.dataset.k; if (S.sort === k) S.dir *= -1; else { S.sort = k; S.dir = k === "t" || k === "riesgo" ? 1 : -1; } tabla(); return; }
+  const r = e.target.closest("tr.row"); if (!r) return;
+  S.open = S.open === r.dataset.t ? null : r.dataset.t; tabla();
+});
+$("#tbl").addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches("tr.row")) { e.preventDefault(); e.target.click(); }
+});
+$("#ideas").addEventListener("click", e => {
+  const b = e.target.closest("[data-t]"); if (!b) return;
+  S.cat = "Todos"; S.q = b.dataset.t; S.sec = ""; S.sem = ""; S.solo = false; S.open = b.dataset.t; S.shown = 100;
+  S.sort = "score"; S.dir = -1;
+  $("#q").value = S.q; $("#sem").value = ""; $("#solo").checked = false;
+  tabs(); sectores(); tabla();
+  $("#explorador").scrollIntoView({block: "start"});
+});
+
+header(); yields(); tabs(); sectores(); todo();
+</script>
+</body>
+</html>
