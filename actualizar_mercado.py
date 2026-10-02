@@ -12,6 +12,7 @@ Uso:
     python actualizar_mercado.py                 # datos reales
     python actualizar_mercado.py --demo          # datos inventados, para probar el diseño
     python actualizar_mercado.py --limite 50     # umbral de precio por defecto en el tablero
+    python actualizar_mercado.py --rapido        # sin P/E: actualiza en pocos minutos, útil durante el día
 
 Esta herramienta INFORMA; no recomienda comprar ni vender.
 """
@@ -149,6 +150,38 @@ def sp500():
     except Exception as e:  # noqa: BLE001
         print(f"[aviso] No pude leer la lista del S&P 500 ({e}). Uso lista de respaldo.", file=sys.stderr)
     return dict(RESPALDO_SP500)
+
+
+def estado_mercado(fecha_ultima):
+    """Indica si la bolsa de EE. UU. está en sesión (9:30 a 16:00, hora de Nueva York)."""
+    try:
+        from zoneinfo import ZoneInfo
+        ny = dt.datetime.now(ZoneInfo("America/New_York"))
+    except Exception:  # noqa: BLE001
+        return None
+    hoy = ny.strftime("%Y-%m-%d")
+    en_horario = ny.weekday() < 5 and dt.time(9, 30) <= ny.time() < dt.time(16, 0)
+    abierto = fecha_ultima == hoy and en_horario
+    if abierto:
+        texto = ("Sesión en curso: los precios llegan con unos 15 minutos de retraso y la variación "
+                 "de hoy es parcial. El cierre definitivo se publica al terminar la sesión.")
+    elif fecha_ultima == hoy:
+        texto = "La sesión de hoy ya terminó. Los datos son del cierre de hoy."
+    else:
+        texto = "Fuera del horario de la bolsa. Los datos son del último cierre disponible."
+    return {"abierto": bool(abierto), "texto": texto, "hora_ny": ny.strftime("%H:%M")}
+
+
+def fundamentales_previos(carpeta):
+    """Reutiliza P/E y dividendos de la ejecución anterior (para el modo rápido)."""
+    try:
+        with open(os.path.join(carpeta, "datos.json"), encoding="utf-8") as fh:
+            previo = json.load(fh)
+        if previo.get("demo"):
+            return {}
+        return {f["t"]: {"pe": f.get("pe"), "div": f.get("div")} for f in previo.get("instrumentos", [])}
+    except Exception:  # noqa: BLE001
+        return {}
 
 
 def construir_universo():
@@ -453,6 +486,8 @@ def main():
     ap.add_argument("--limite", type=float, default=100.0, help="umbral de precio por defecto (US$)")
     ap.add_argument("--salida", default=os.path.join(AQUI, "docs"))
     ap.add_argument("--sin-fundamentales", action="store_true")
+    ap.add_argument("--rapido", action="store_true",
+                    help="no vuelve a descargar P/E (reutiliza los de la ejecución anterior)")
     args = ap.parse_args()
 
     print("1/5 Construyendo lista de instrumentos...")
@@ -497,6 +532,8 @@ def main():
     if args.demo:
         rnd = random.Random(3)
         fund = {t: {"pe": round(rnd.uniform(8, 40), 1), "div": round(rnd.uniform(0, 4), 2)} for t in candidatos}
+    elif args.rapido:
+        fund = fundamentales_previos(args.salida)
     elif args.sin_fundamentales:
         fund = {}
     else:
@@ -508,9 +545,14 @@ def main():
     print("5/5 Rendimientos de bonos y generación del tablero...")
     rend = rendimientos_demo() if args.demo else descargar_rendimientos()
     zona = dt.timezone(dt.timedelta(hours=-5))
+    fechas_acciones = [f["fecha"] for f in filas if f["cat"] != "Futuro"] or [f["fecha"] for f in filas]
+    fecha_mercado = max(fechas_acciones)
     datos = {
         "generado": dt.datetime.now(zona).strftime("%d/%m/%Y %H:%M") + " (hora de Ecuador)",
-        "fecha_mercado": max(f["fecha"] for f in filas),
+        "generado_utc": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "fecha_mercado": fecha_mercado,
+        "estado": estado_mercado(fecha_mercado),
+        "modo": "rapido" if args.rapido else "completo",
         "demo": bool(args.demo),
         "umbral": args.limite,
         "rendimientos": rend,
