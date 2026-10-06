@@ -11,3 +11,4 @@
 #   .AX Australia   .TO Toronto   .SA Brasil   .MX México
 #
 # El tablero convierte los precios a US$ con el tipo de cambio del día. Máximo 300 símbolos.
+TM
