@@ -1,12 +1,33 @@
+# Este archivo va en  .github/workflows/actualizar.yml  de tu repositorio.
 name: Actualizar tablero de mercado
 
 on:
   schedule:
+    # Durante la sesión de Wall Street: cada hora, de 9:00 a 16:00 hora de Ecuador (14:00 a 21:00 UTC).
+    - cron: "0 14-21 * * 1-5"
+    # 18:00 hora de Ecuador: actualización completa (incluye P/E) con el cierre ya publicado.
     - cron: "0 23 * * 1-5"
-  workflow_dispatch:
+  workflow_dispatch:   # permite ejecutarlo a mano cuando quieras
+    inputs:
+      modo:
+        description: "rapido (pocos minutos) o completo (incluye P/E y dividendos de Yahoo)"
+        type: choice
+        default: rapido
+        options:
+          - rapido
+          - completo
+      agregar:
+        description: "Símbolos de Yahoo Finance a añadir a mis_empresas.txt (opcional), p. ej. TSLA, 7203.T"
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: write
+
+concurrency:
+  group: actualizar-tablero
+  cancel-in-progress: false
 
 jobs:
   actualizar:
@@ -24,11 +45,20 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Generar tablero
-        run: python actualizar_mercado.py --limite 100
+        env:
+          # Se pasan como variables de entorno (no dentro del comando) para evitar inyección de texto.
+          PROGRAMADO: ${{ github.event.schedule }}
+          MODO: ${{ github.event.inputs.modo }}
+          AGREGAR: ${{ github.event.inputs.agregar }}
+        run: |
+          ARGS=(--limite 100)
+          if [ "$PROGRAMADO" != "0 23 * * 1-5" ] && [ "$MODO" != "completo" ]; then ARGS+=(--rapido); fi
+          if [ -n "$AGREGAR" ]; then ARGS+=(--agregar "$AGREGAR"); fi
+          python actualizar_mercado.py "${ARGS[@]}"
 
       - name: Guardar cambios
         run: |
           git config user.name "bot-mercado"
           git config user.email "bot@users.noreply.github.com"
-          git add docs
-          git diff --cached --quiet || (git commit -m "Actualizacion $(date -u +%F)" && git push)
+          git add docs mis_empresas.txt
+          git diff --cached --quiet || (git commit -m "Actualizacion $(date -u '+%F %H:%M') UTC" && (git push || (git pull --rebase && git push)))
