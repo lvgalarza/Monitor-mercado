@@ -13,6 +13,7 @@ Uso:
     python actualizar_mercado.py --demo          # datos inventados, para probar el diseño
     python actualizar_mercado.py --limite 50     # umbral de precio por defecto en el tablero
     python actualizar_mercado.py --rapido        # sin P/E: actualiza en pocos minutos, útil durante el día
+    python actualizar_mercado.py --agregar "TSLA, 7203.T"   # añade empresas de cualquier país a mis_empresas.txt
 
 Esta herramienta INFORMA; no recomienda comprar ni vender.
 """
@@ -23,6 +24,7 @@ import json
 import math
 import os
 import random
+import re
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -150,6 +152,150 @@ def sp500():
     except Exception as e:  # noqa: BLE001
         print(f"[aviso] No pude leer la lista del S&P 500 ({e}). Uso lista de respaldo.", file=sys.stderr)
     return dict(RESPALDO_SP500)
+
+
+# ---------------------------------------------------------------------------
+# EMPRESAS PERSONALES (cualquier empresa de Yahoo Finance, de cualquier país)
+# ---------------------------------------------------------------------------
+MIS_EMPRESAS = os.path.join(AQUI, "mis_empresas.txt")
+MAX_EXTRAS = 300
+RE_SIMBOLO = re.compile(r"^[A-Z0-9][A-Z0-9.\-]{0,14}$")
+ENCABEZADO_MIS = ("# MIS EMPRESAS\n# Un símbolo de Yahoo Finance por línea (o separados por comas). "
+                  "Todo lo que siga a un # se ignora.\n# Ejemplos: TSLA, 7203.T, SAN.MC\n")
+SECTORES_YF = {
+    "Technology": "Tecnología", "Healthcare": "Salud", "Financial Services": "Finanzas",
+    "Consumer Cyclical": "Consumo discrecional", "Communication Services": "Comunicaciones",
+    "Industrials": "Industria", "Consumer Defensive": "Consumo básico", "Energy": "Energía",
+    "Utilities": "Servicios públicos", "Real Estate": "Inmobiliario", "Basic Materials": "Materiales",
+}
+# Yahoo cotiza algunas bolsas en subunidades (peniques, centavos): moneda base y factor
+SUBUNIDADES = {"GBp": ("GBP", 0.01), "GBX": ("GBP", 0.01), "ZAc": ("ZAR", 0.01),
+               "ZAC": ("ZAR", 0.01), "ILA": ("ILS", 0.01)}
+
+
+def simbolos_de(texto):
+    """Extrae símbolos válidos de un texto (separados por espacios, comas o punto y coma)."""
+    out = []
+    for t in re.split(r"[\s,;]+", (texto or "").upper()):
+        if t and RE_SIMBOLO.match(t) and t not in out:
+            out.append(t)
+    return out
+
+
+def leer_mis_empresas():
+    if not os.path.exists(MIS_EMPRESAS):
+        with open(MIS_EMPRESAS, "w", encoding="utf-8") as fh:
+            fh.write(ENCABEZADO_MIS)
+        return []
+    out = []
+    with open(MIS_EMPRESAS, encoding="utf-8") as fh:
+        for linea in fh:
+            for t in simbolos_de(linea.split("#", 1)[0]):
+                if t not in out:
+                    out.append(t)
+    return out[:MAX_EXTRAS]
+
+
+def agregar_empresas(texto):
+    """Añade símbolos a mis_empresas.txt. Devuelve (añadidos, rechazados)."""
+    validos = simbolos_de(texto)
+    crudos = [x for x in re.split(r"[\s,;]+", (texto or "").strip()) if x]
+    rechazados = [x for x in crudos if x.upper() not in validos]
+    existentes = set(leer_mis_empresas())
+    nuevos = [t for t in validos if t not in existentes]
+    if nuevos:
+        with open(MIS_EMPRESAS, "rb") as fh:
+            contenido = fh.read()
+        with open(MIS_EMPRESAS, "a", encoding="utf-8") as fh:
+            if contenido and not contenido.endswith(b"\n"):
+                fh.write("\n")
+            fh.write("\n".join(nuevos) + "\n")
+    return nuevos, rechazados
+
+
+def metas_previas(carpeta):
+    """Datos de empresas personales de la ejecución anterior (evita volver a consultarlos)."""
+    try:
+        with open(os.path.join(carpeta, "datos.json"), encoding="utf-8") as fh:
+            previo = json.load(fh)
+        if previo.get("demo"):
+            return {}
+        return {f["t"]: {"n": f["n"], "cat": f["cat"], "sec": f["sec"], "mon": f.get("mon"), "pais": f.get("pais") or ""}
+                for f in previo.get("instrumentos", []) if f.get("ext") and f.get("mon")}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def info_extra(t):
+    """Nombre, tipo, sector, moneda y país de un símbolo, según Yahoo."""
+    import yfinance as yf
+    try:
+        i = yf.Ticker(t).info or {}
+    except Exception as e:  # noqa: BLE001
+        return {"error": f"Yahoo no respondió ({str(e)[:60]})"}
+    cat = {"EQUITY": "Acción", "ETF": "ETF", "MUTUALFUND": "ETF"}.get(i.get("quoteType"))
+    if not cat:
+        return {"error": "símbolo no encontrado o de un tipo no soportado (solo acciones y fondos)"}
+    moneda = i.get("currency") or i.get("financialCurrency")
+    if not moneda:
+        return {"error": "Yahoo no informa la moneda en que cotiza"}
+    return {"n": i.get("longName") or i.get("shortName") or t, "cat": cat,
+            "sec": SECTORES_YF.get(i.get("sector"), i.get("sector") or ("Fondos" if cat == "ETF" else "Otros")),
+            "mon": moneda, "pais": i.get("country") or ""}
+
+
+def incorporar_extras(universo, extras, previo, errores):
+    pendientes = []
+    for t in extras:
+        if t in universo:
+            universo[t]["ext"] = True          # ya está en las listas: solo se marca como «mía»
+        elif t in previo:
+            universo[t] = dict(previo[t], ext=True)
+        else:
+            pendientes.append(t)
+    if pendientes:
+        with ThreadPoolExecutor(max_workers=6) as ex:
+            for t, meta in zip(pendientes, ex.map(info_extra, pendientes)):
+                if "error" in meta:
+                    errores[t] = meta["error"]
+                else:
+                    universo[t] = dict(meta, ext=True)
+
+
+def tasa_a_usd(moneda):
+    """Tipo de cambio de una moneda a US$ (último cierre disponible)."""
+    if moneda == "USD":
+        return 1.0
+    import yfinance as yf
+    try:
+        h = yf.Ticker(f"{moneda}USD=X").history(period="5d")["Close"].dropna()
+        return float(h.iloc[-1]) if len(h) else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def convertir_a_usd(marcos, universo, errores):
+    """Convierte a US$ los precios y dividendos de las empresas que cotizan en otra moneda."""
+    cache = {}
+    for t, meta in universo.items():
+        if not meta.get("ext") or t not in marcos or not meta.get("mon"):
+            continue
+        base, factor = SUBUNIDADES.get(meta["mon"], (meta["mon"], 1.0))
+        if base not in cache:
+            cache[base] = tasa_a_usd(base)
+        tasa = cache[base]
+        if tasa is None:
+            errores[t] = f"sin tipo de cambio de {meta['mon']} a US$"
+            del marcos[t]
+            continue
+        k = tasa * factor
+        if abs(k - 1.0) > 1e-9:
+            sub = marcos[t].copy()
+            sub["Close"] = sub["Close"].astype(float) * k
+            if "Dividends" in sub.columns:
+                sub["Dividends"] = pd.to_numeric(sub["Dividends"], errors="coerce").fillna(0.0) * k
+            marcos[t] = sub
+        meta["fx"] = round(k, 6)
 
 
 def estado_mercado(fecha_ultima):
@@ -486,6 +632,7 @@ def main():
     ap.add_argument("--limite", type=float, default=100.0, help="umbral de precio por defecto (US$)")
     ap.add_argument("--salida", default=os.path.join(AQUI, "docs"))
     ap.add_argument("--sin-fundamentales", action="store_true")
+    ap.add_argument("--agregar", default="", help='símbolos a añadir a mis_empresas.txt, p. ej. "TSLA, 7203.T"')
     ap.add_argument("--rapido", action="store_true",
                     help="no vuelve a descargar P/E (reutiliza los de la ejecución anterior)")
     args = ap.parse_args()
@@ -494,10 +641,26 @@ def main():
     universo = construir_universo()
     if args.demo:
         universo = {t: v for t, v in universo.items() if v["cat"] != "Acción" or t in RESPALDO_SP500}
-    print(f"    {len(universo)} instrumentos")
+    errores_ext = {}
+    if args.demo:
+        for t, meta in {
+            "TSLA": {"n": "Tesla, Inc.", "cat": "Acción", "sec": "Consumo discrecional", "mon": "USD", "pais": "United States"},
+            "7203.T": {"n": "Toyota Motor Corporation", "cat": "Acción", "sec": "Consumo discrecional", "mon": "JPY", "pais": "Japan", "fx": 0.0066},
+            "SAN.MC": {"n": "Banco Santander, S.A.", "cat": "Acción", "sec": "Finanzas", "mon": "EUR", "pais": "Spain", "fx": 1.08},
+        }.items():
+            universo[t] = dict(meta, ext=True)
+        errores_ext["XYZ.L"] = "símbolo no encontrado o de un tipo no soportado (solo acciones y fondos)"
+    else:
+        if args.agregar:
+            nuevos, rechazados = agregar_empresas(args.agregar)
+            print(f"    Añadidas a mis_empresas.txt: {nuevos or 'ninguna'}; rechazadas: {rechazados or 'ninguna'}")
+        incorporar_extras(universo, leer_mis_empresas(), metas_previas(args.salida), errores_ext)
+    print(f"    {len(universo)} instrumentos ({sum(1 for v in universo.values() if v.get('ext'))} en «Mis empresas»)")
 
     print("2/5 Descargando precios...")
     marcos = marcos_demo(list(universo)) if args.demo else descargar_precios(list(universo))
+    if not args.demo:
+        convertir_a_usd(marcos, universo, errores_ext)
     if len(marcos) < 20:
         sys.exit("Error: se descargaron muy pocos precios. No se actualiza el tablero.")
 
@@ -511,6 +674,11 @@ def main():
             print(f"[aviso] {t}: {e}", file=sys.stderr)
             continue
         fila = {"t": t.replace("=F", ""), "n": meta["n"], "cat": meta["cat"], "sec": meta["sec"]}
+        if meta.get("ext"):
+            fila["ext"] = True
+            fila["mon"] = meta.get("mon")
+            fila["pais"] = meta.get("pais") or ""
+            fila["fx"] = meta.get("fx")
         if meta["cat"] == "Futuro":
             fila["sem"], fila["score"], fila["pos"], fila["neg"] = "gris", None, [], []
             fila["riesgo"] = "Muy alto"
@@ -545,7 +713,12 @@ def main():
     print("5/5 Rendimientos de bonos y generación del tablero...")
     rend = rendimientos_demo() if args.demo else descargar_rendimientos()
     zona = dt.timezone(dt.timedelta(hours=-5))
-    fechas_acciones = [f["fecha"] for f in filas if f["cat"] != "Futuro"] or [f["fecha"] for f in filas]
+    fechas_acciones = ([f["fecha"] for f in filas if f["cat"] != "Futuro" and not f.get("ext")]
+                       or [f["fecha"] for f in filas if f["cat"] != "Futuro"] or [f["fecha"] for f in filas])
+    hechos = {f["t"] for f in filas}
+    omitidos = [{"t": t.replace("=F", ""), "motivo": "Yahoo no entregó datos suficientes en esta actualización"}
+                for t in universo if t.replace("=F", "") not in hechos]
+    omitidos += [{"t": t, "motivo": m} for t, m in errores_ext.items()]
     fecha_mercado = max(fechas_acciones)
     datos = {
         "generado": dt.datetime.now(zona).strftime("%d/%m/%Y %H:%M") + " (hora de Ecuador)",
@@ -557,6 +730,7 @@ def main():
         "umbral": args.limite,
         "rendimientos": rend,
         "curva": texto_curva(rend),
+        "omitidos": omitidos[:300],
         "instrumentos": filas,
     }
     os.makedirs(args.salida, exist_ok=True)

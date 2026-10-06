@@ -1,0 +1,13 @@
+# MIS EMPRESAS
+# Escribe aquí los símbolos de Yahoo Finance de las empresas o fondos que quieras seguir,
+# además de las 500 del S&P 500. Uno por línea o separados por comas. Todo lo que siga a un # se ignora.
+#
+# Ejemplos:   TSLA   BABA   7203.T   SAN.MC   SHEL.L
+#
+# Cómo encontrar el símbolo: busca la empresa en finance.yahoo.com. Las de EE. UU. no llevan sufijo.
+# Las de otros países llevan uno según su bolsa:
+#   .L Londres   .DE Alemania   .PA París   .AS Ámsterdam   .MC Madrid   .MI Milán   .SW Suiza
+#   .T Tokio   .HK Hong Kong   .SS Shanghái   .SZ Shenzhen   .KS Corea   .TW Taiwán   .NS India
+#   .AX Australia   .TO Toronto   .SA Brasil   .MX México
+#
+# El tablero convierte los precios a US$ con el tipo de cambio del día. Máximo 300 símbolos.

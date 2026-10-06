@@ -150,6 +150,7 @@ button{cursor:pointer}
 .tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
 .tab{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 14px;min-height:36px;border-left:6px solid var(--tc,var(--accent))}
 .tab[aria-pressed="true"]{background:var(--tc,var(--accent));border-color:var(--tc,var(--accent));color:#fff}
+.tab[data-c="Mis"]{--tc:var(--s-seg)}
 .tab[data-c="Acción"]{--tc:var(--cat-a)} .tab[data-c="ETF"]{--tc:var(--cat-e)} .tab[data-c="Bono"]{--tc:var(--cat-b)} .tab[data-c="Futuro"]{--tc:var(--cat-f)}
 .hint{color:var(--muted);font-size:13px}
 .tablebox{overflow-x:auto;background:var(--surface);border-top:3px solid var(--s-expl);border-bottom:1px solid var(--line)}
@@ -261,6 +262,13 @@ dialog#cfg details{border:0;padding:0;margin-top:12px;background:none}
 dialog#cfg summary{padding:6px 0;font-weight:500;font-size:14px}
 dialog#cfg ol,dialog#cfg ul{margin:6px 0 0;padding-left:20px;font-size:13.5px;color:var(--muted)}
 #cfgstate{margin-top:12px;font-size:14px;min-height:1.4em}
+.addbox{margin:0 0 14px;border:1px solid var(--line);border-left:5px solid var(--s-seg);border-radius:6px}
+.addbox summary{padding:11px 0}
+.addbox .ctrl{margin:8px 0}
+.addbox input[type=text]{width:min(420px,100%)}
+.addbox code{background:var(--soft);padding:0 5px;border-radius:3px}
+#omit details{border:1px solid var(--line);border-radius:6px;margin-bottom:8px}
+#omit summary{padding:8px 0;font-weight:500;font-size:14px;color:var(--muted)}
 @media (max-width:860px){
   .ideas,.movers{grid-template-columns:1fr}
   .yields{grid-template-columns:repeat(2,1fr)}
@@ -372,6 +380,16 @@ dialog#cfg ol,dialog#cfg ul{margin:6px 0 0;padding-left:20px;font-size:13.5px;co
       <h2>Explorador</h2>
       <p>Toca una fila para ver su gráfico de línea, la variación de cada día y por qué tiene su color. Ordena con los títulos de columna.</p>
     </div>
+    <details class="addbox" id="addbox"><summary>¿No encuentras una empresa? Añade cualquiera del mundo</summary><div class="in">
+      <p>Escribe su <b>símbolo de Yahoo Finance</b>; si son varios, sepáralos con comas. GitHub las descarga y aparecen en la pestaña «Mis empresas» (tarda unos minutos).</p>
+      <div class="ctrl">
+        <input type="text" id="addsym" placeholder="Ej.: TSLA, BABA, 7203.T, SAN.MC" autocomplete="off" aria-label="Símbolos a añadir">
+        <button class="btn-act" id="addbtn">Añadir y actualizar</button>
+      </div>
+      <div class="actmsg" id="addmsg" role="status" aria-live="polite" hidden></div>
+      <p class="hint">Cómo hallar el símbolo: búscala en finance.yahoo.com. Las de EE. UU. no llevan sufijo (<code>TSLA</code>). Las de otros países llevan uno según su bolsa: <code>.L</code> Londres, <code>.DE</code> Alemania, <code>.PA</code> París, <code>.MC</code> Madrid, <code>.MI</code> Milán, <code>.T</code> Tokio, <code>.HK</code> Hong Kong, <code>.SS</code> Shanghái, <code>.NS</code> India, <code>.AX</code> Australia, <code>.TO</code> Toronto, <code>.SA</code> Brasil.</p>
+      <p class="hint">Se admiten acciones y fondos cotizados. Los precios se convierten a US$ con el tipo de cambio de hoy, y las variaciones son las de la moneda local. Para añadirlas necesitas la conexión ⚙ con GitHub; la lista se guarda en el archivo <code>mis_empresas.txt</code> de tu repositorio.</p>
+    </div></details>
     <div class="tabs" id="tabs" role="group" aria-label="Tipo de instrumento"></div>
     <div class="seg" id="vista" role="group" aria-label="Vista de la tabla">
       <button data-v="res" aria-pressed="true">Variaciones</button>
@@ -389,6 +407,7 @@ dialog#cfg ol,dialog#cfg ul{margin:6px 0 0;padding-left:20px;font-size:13.5px;co
       <label class="f"><input type="checkbox" id="solo"> Solo hasta el precio máximo</label>
     </div>
     <p class="hint" id="count" style="margin-bottom:8px"></p>
+    <div id="omit"></div>
     <div class="tablebox"><table id="tbl"></table></div>
     <button class="more" id="more" hidden>Mostrar más</button>
   </section>
@@ -541,7 +560,9 @@ const tag = f => `<span class="${CATC[f.cat] || ""}"><span class="tk">${esc(f.t)
 const catTag = c => `<span class="${CATC[c] || ""}"><span class="tk">${esc(c)}</span></span>`;
 const SEM = {verde: "Señales favorables", amarillo: "Señales mixtas", rojo: "Señales débiles", gris: "Solo informativo"};
 const dot = s => `<span class="dot ${s}" role="img" aria-label="${SEM[s]}" title="${SEM[s]}"></span>`;
-const CATS = [["Todos", "Todos"], ["Acción", "Acciones"], ["ETF", "ETFs"], ["Bono", "Bonos (ETF)"], ["Futuro", "Futuros"]];
+const CATS = [["Todos", "Todos"], ["Acción", "Acciones"], ["ETF", "ETFs"], ["Bono", "Bonos (ETF)"], ["Futuro", "Futuros"], ["Mis", "Mis empresas"]];
+const enCat = f => S.cat === "Todos" || (S.cat === "Mis" ? !!f.ext : f.cat === S.cat);
+const subl = f => `${esc(f.sec || "")}${f.pais ? " · " + esc(f.pais) : ""}${f.mon && f.mon !== "USD" ? " · cotiza en " + esc(f.mon) : ""}`;
 const RIESGO = {"Bajo": 1, "Medio": 2, "Alto": 3, "Muy alto": 4};
 const COLORS = ["#2563EB", "#EA580C", "#7C3AED", "#0D9488", "#DB2777", "#A16207"];
 const S = {cat: "Todos", q: "", sec: "", sem: "", solo: true, limit: D.umbral, sort: "score", dir: -1, open: null, shown: 100, cmp: [], vista: "res", dv: {q: "", tipo: "", frec: "", min: 0, solo: true, monto: 1000, sort: "pct", dir: -1, shown: 40}};
@@ -781,7 +802,7 @@ function rmCmp(t) { S.cmp = S.cmp.filter(x => x !== t); $("#cmsg").textContent =
 
 /* ---------- explorador ---------- */
 function pasa(f) {
-  if (S.cat !== "Todos" && f.cat !== S.cat) return false;
+  if (!enCat(f)) return false;
   if (S.q) {
     const q = S.q.toLowerCase();
     if (I.some(x => x.t.toLowerCase() === q)) { if (f.t.toLowerCase() !== q) return false; }
@@ -798,7 +819,7 @@ function pasa(f) {
 const val = (f, k) => k === "n" ? f.n : k === "t" ? f.t : k === "riesgo" ? RIESGO[f.riesgo] : k === "dl" ? deltaP(f) : f[k];
 
 function sectores() {
-  const set = [...new Set(I.filter(f => S.cat === "Todos" || f.cat === S.cat).map(f => f.sec))].sort((a, b) => a.localeCompare(b, "es"));
+  const set = [...new Set(I.filter(enCat).map(f => f.sec))].sort((a, b) => a.localeCompare(b, "es"));
   if (S.sec && !set.includes(S.sec)) S.sec = "";
   $("#sec").innerHTML = `<option value="">Todos los sectores</option>` + set.map(s => `<option ${s === S.sec ? "selected" : ""}>${esc(s)}</option>`).join("");
 }
@@ -833,7 +854,7 @@ function detalle(f) {
         <table class="mini"><thead><tr><th>Sesión</th><th>Cierre</th><th>Cambio US$</th><th>Cambio %</th></tr></thead><tbody>${filas}</tbody></table>
       </div></div>`;
   }
-  const encabezado = `<div class="dhd"><b>${esc(f.n)}</b>${tag(f)}${catTag(f.cat)}<span class="hint">${esc(f.sec || "")}</span></div>`;
+  const encabezado = `<div class="dhd"><b>${esc(f.n)}</b>${tag(f)}${catTag(f.cat)}<span class="hint">${subl(f)}</span>${f.mon && f.mon !== "USD" ? `<span class="hint">Precios convertidos a US$ con el tipo de cambio de hoy; las variaciones son las de su moneda local.</span>` : ""}</div>`;
   const nivel = (v, p, cap) => v == null ? "—" : `US$ ${fmt(v)} ${chip(p, cap)}`;
   const metricas = `<dl class="m">
       <dt>Rendimiento anual (12 meses)</dt><dd>${chip(f.a1, 40)}</dd>
@@ -886,7 +907,7 @@ function tabla() {
     const comunes = `<tr class="row ${CATC[f.cat] || ""}" tabindex="0" data-t="${esc(f.t)}" aria-expanded="${abierto}">
       <td><button class="star" data-s="${esc(f.t)}" aria-pressed="${S.cmp.includes(f.t)}" title="Añadir al seguimiento y la comparación" aria-label="Seguir ${esc(f.n)}">★</button></td>
       <td><span class="sc">${dot(f.sem)}<span class="num">${f.score ?? "—"}</span></span></td>
-      <td class="who l"><b>${esc(f.n)}</b><small>${tag(f)} ${esc(f.sec || "")}</small></td>
+      <td class="who l"><b>${esc(f.n)}</b><small>${tag(f)} ${subl(f)}</small></td>
       <td class="num">${fmt(f.p)}</td>`;
     h += comunes + (niv
       ? `<td class="num ${cls(f.a1)}" style="${heat(f.a1, 40)}">${pct(f.a1)}</td>
@@ -903,6 +924,9 @@ function tabla() {
   }
   $("#tbl").innerHTML = h + "</tbody>";
   $("#count").textContent = total ? `Mostrando ${fmt(vis.length, 0)} de ${fmt(total, 0)} instrumentos.` + (S.solo && S.cat === "Todos" ? " Los futuros se ven en su pestaña." : "") + (niv ? " Cada celda indica cuánto se aleja el precio actual de ese nivel (+ por encima, − por debajo) y, debajo, el valor del nivel." : "") : "Ningún instrumento cumple estos filtros. Prueba subir el precio máximo o quitar el filtro de color.";
+  if (!total && S.cat === "Mis" && !I.some(f => f.ext)) $("#count").textContent = "Aún no añadiste empresas. Usa el recuadro «Añade cualquiera del mundo» de arriba.";
+  const om = D.omitidos || [];
+  $("#omit").innerHTML = om.length ? `<details><summary>${fmt(om.length, 0)} ${om.length === 1 ? "instrumento no se pudo cargar" : "instrumentos no se pudieron cargar"} en esta actualización</summary><div class="in"><ul>${om.slice(0, 60).map(o => `<li><b>${esc(o.t)}</b>: ${esc(o.motivo)}</li>`).join("")}</ul>${om.length > 60 ? `<p class="hint">…y ${om.length - 60} más.</p>` : ""}</div></details>` : "";
   $("#more").hidden = total <= vis.length;
   document.querySelectorAll("#vista button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.vista));
   setTW();
@@ -962,7 +986,7 @@ function dividendos() {
   for (const f of vis) {
     const d = f.dv, acc = q.monto / f.p;
     h += `<tr class="row ${CATC[f.cat] || ""}" tabindex="0" data-t="${esc(f.t)}" title="Ver gráfico y detalle">
-      <td class="who l"><b>${esc(f.n)}</b><small>${tag(f)} ${esc(f.sec || "")}</small></td>
+      <td class="who l"><b>${esc(f.n)}</b><small>${tag(f)} ${subl(f)}</small></td>
       <td class="num">${fmt(f.p)}</td>
       <td><span class="yl" style="${yHeat(f.dvp)}">${fmt(f.dvp)} %</span>${f.dvp > 8 ? '<span class="wr" title="Rendimiento muy alto: revisa por qué cayó el precio o si el dividendo está en riesgo">⚠</span>' : ""}</td>
       <td class="num">${d ? fmt(d.anual) : "—"}</td>
@@ -1085,13 +1109,18 @@ function cargar(n) {
   datalist(); dvOpciones(); header(); yields(); sectores(); todo(); compare();
   $("#nuevos").innerHTML = "";
 }
-function msg(t, tipo = "info", url) {
-  const el = $("#actmsg"); el.hidden = !t; el.dataset.t = tipo;
-  el.innerHTML = esc(t) + (url ? ` <a href="${esc(url)}" target="_blank" rel="noopener">Ver registro ↗</a>` : "");
+let destinoAdd = false;
+function msg(t, tipo = "info", url, linkTxt = "Ver registro ↗") {
+  const html = esc(t) + (url ? ` <a href="${esc(url)}" target="_blank" rel="noopener">${esc(linkTxt)}</a>` : "");
+  [["#actmsg", true], ["#addmsg", destinoAdd]].forEach(([sel, on]) => {
+    const el = $(sel); if (!el) return;
+    el.hidden = !(t && on); el.dataset.t = tipo; if (on) el.innerHTML = html;
+  });
 }
 function ocupado(b) {
   busy = b; $("#btnAct").classList.toggle("busy", b);
   $("#btnTxt").textContent = b ? "Actualizando… (pulsa para dejar de esperar)" : "Actualizar datos";
+  const a = $("#addbtn"); if (a) a.disabled = b;
 }
 
 const CFGK = "mm_gh";
@@ -1128,11 +1157,30 @@ async function soloPublicado() {
   }
 }
 
-async function pedirActualizacion(c) {
-  const t0 = Date.now();
+function textoListo(agregar) {
+  if (!agregar) return ["Listo: datos actualizados (" + D.generado + ").", "ok"];
+  const syms = agregar.split(","), ok = syms.filter(t => BYT[t]), no = syms.filter(t => !BYT[t]);
+  let t = ok.length ? `Listo: ya puedes consultar ${ok.join(", ")} en la pestaña «Mis empresas».` : "La actualización terminó, pero no se pudo cargar ninguna de las empresas.";
+  if (no.length) {
+    const mot = (D.omitidos || []).filter(o => no.includes(o.t)).map(o => `${o.t}: ${o.motivo}`);
+    t += ` No se cargó: ${mot.length ? mot.join("; ") : no.join(", ") + " (no aparecieron en los datos)"}.`;
+  }
+  return [t, ok.length ? "ok" : "err"];
+}
+function irAMisEmpresas() {
+  S.cat = "Mis"; S.q = ""; S.sec = ""; S.sem = ""; S.solo = false; S.open = null; S.shown = 100; S.sort = "n"; S.dir = 1;
+  $("#q").value = ""; $("#sem").value = ""; $("#solo").checked = false;
+  tabs(); sectores(); tabla();
+}
+
+async function pedirActualizacion(c, agregar) {
+  const t0 = Date.now(), ruta = "/actions/workflows/actualizar.yml/dispatches";
   msg("Enviando la solicitud a GitHub…");
-  let r = await gh(c, "/actions/workflows/actualizar.yml/dispatches", {method: "POST", body: {ref: c.ref, inputs: {modo: c.modo}}});
-  if (r.status === 422) r = await gh(c, "/actions/workflows/actualizar.yml/dispatches", {method: "POST", body: {ref: c.ref}});
+  let r = await gh(c, ruta, {method: "POST", body: {ref: c.ref, inputs: Object.assign({modo: c.modo}, agregar ? {agregar} : {})}});
+  if (r.status === 422) {
+    if (agregar) throw new Error("GitHub rechazó la solicitud. Para añadir empresas, el archivo actualizar.yml debe ser la versión nueva (con la opción «agregar») y la rama debe existir.");
+    r = await gh(c, ruta, {method: "POST", body: {ref: c.ref}});
+  }
   if (r.status !== 204) throw new Error(errGh(r.status));
   let run = null;
   for (let i = 0; i < 60 && !cancelar; i++) {
@@ -1151,22 +1199,37 @@ async function pedirActualizacion(c) {
   for (let i = 0; i < 24 && !cancelar; i++) {
     let n = null;
     try { n = await traerDatos(); } catch (e) {}
-    if (n && stamp(n) !== stamp(D)) { cargar(n); msg("Listo: datos actualizados (" + n.generado + ").", "ok"); return; }
+    if (n && stamp(n) !== stamp(D)) {
+      cargar(n);
+      const [t, tipo] = textoListo(agregar);
+      if (agregar && tipo === "ok") irAMisEmpresas();
+      msg(t, tipo); return;
+    }
     await sleep(POLL_PAGES);
   }
   msg(cancelar ? "Dejaste de esperar. Pulsa «Actualizar datos» en un minuto para cargar el resultado." : "La tarea terminó, pero la página aún no muestra datos nuevos. Espera un minuto y vuelve a pulsar «Actualizar datos».", "info");
 }
 
-async function actualizar() {
+async function actualizar(agregar) {
   if (busy) { cancelar = true; return; }
-  cancelar = false; ocupado(true);
+  cancelar = false; destinoAdd = !!agregar; ocupado(true);
   try {
     if (!/^https?:/.test(location.protocol)) { msg("Abre el tablero desde su dirección web de GitHub Pages para poder actualizarlo.", "err"); return; }
     const c = leerCfg();
-    if (!c.token || !c.repo) await soloPublicado(); else await pedirActualizacion(c);
+    if (!c.token || !c.repo) {
+      if (agregar) msg("Para añadir empresas desde aquí, configura la conexión con ⚙ (una sola vez). Mientras tanto puedes hacerlo a mano: abre tu lista, escribe el símbolo en una línea nueva, guárdala y ejecuta el flujo en GitHub.", "info", c.repo ? `https://github.com/${c.repo}/edit/${c.ref}/mis_empresas.txt` : "", "Abrir mi lista ↗");
+      else await soloPublicado();
+    } else await pedirActualizacion(c, agregar);
   } catch (e) {
     msg("No pude actualizar: " + e.message, "err");
   } finally { ocupado(false); cancelar = false; }
+}
+const simbolosDe = txt => [...new Set(String(txt).toUpperCase().split(/[\s,;]+/).filter(t => /^[A-Z0-9][A-Z0-9.\-]{0,14}$/.test(t)))];
+function anadir() {
+  const syms = simbolosDe($("#addsym").value);
+  if (!syms.length) { destinoAdd = true; msg("Escribe al menos un símbolo válido, por ejemplo TSLA o 7203.T.", "err"); return; }
+  if (syms.length > 20) { destinoAdd = true; msg("Añade como máximo 20 símbolos por vez.", "err"); return; }
+  actualizar(syms.join(","));
 }
 
 function abrirCfg() {
@@ -1189,7 +1252,9 @@ async function guardarCfg() {
     $("#cfgstate").textContent = r.ok ? "Conexión correcta. Ya puedes cerrar y pulsar «Actualizar datos»." : errGh(r.status);
   } catch (e) { $("#cfgstate").textContent = "No pude conectar con GitHub: " + e.message; }
 }
-$("#btnAct").addEventListener("click", actualizar);
+$("#btnAct").addEventListener("click", () => actualizar());
+$("#addbtn").addEventListener("click", anadir);
+$("#addsym").addEventListener("keydown", e => { if (e.key === "Enter") anadir(); });
 $("#btnCfg").addEventListener("click", abrirCfg);
 $("#cfgsave").addEventListener("click", guardarCfg);
 $("#cfgdel").addEventListener("click", () => { const c = leerCfg(); delete c.token; guardaCfg(c); $("#cfgstate").textContent = "Token borrado de este navegador."; });
